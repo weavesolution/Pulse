@@ -1,0 +1,2107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, minimum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1B365D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pulse">
+<meta name="description" content="Pulse — billing that keeps working when the network does not.">
+<title>Pulse</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="icon" href="img/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<style>
+:root{
+  --navy:#1B365D; --accent:#D67A3A; --accent-d:#BF6527; --bg:#F4F2EE; --card:#FFFFFF; --line:#E4DFD7;
+  --ink:#1C1917; --muted:#6B645C; --red:#B91C1C; --ok:#15803D; --sel:#FCF1E8; --soft:#F0ECE6;
+  --tabbar-h:62px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{max-width:100%;}
+body{
+  margin:0;font-family:'Roboto',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);
+  overflow-x:clip;overscroll-behavior-y:none;-webkit-font-smoothing:antialiased;touch-action:manipulation;
+  -webkit-text-size-adjust:100%;text-size-adjust:100%;font-size:15px;
+}
+button,input,select,textarea{font-family:inherit;color:inherit;}
+button{cursor:pointer;}
+button:active{transform:scale(.98);}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+.hidden{display:none!important;}
+.num{font-variant-numeric:tabular-nums;}
+
+/* ===== header ===== */
+.appbar{
+  position:sticky;top:0;z-index:60;background:var(--navy);color:#fff;
+  padding:calc(11px + var(--safe-t)) 14px 11px;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:11px;
+}
+.mark{background:var(--accent);color:#fff;font-weight:700;font-size:.82rem;letter-spacing:2.4px;padding:6px 8px 6px 10px;flex:0 0 auto;}
+.appbar .brand{flex:1 1 0;min-width:0;}
+.appbar h1{font-size:1.08rem;font-weight:700;margin:0;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.appbar .sub{font-size:.76rem;color:#C9D6E8;display:block;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hbtn{
+  flex:0 0 auto;background:transparent;border:1px solid #99A5B7;color:#fff;border-radius:8px;min-height:38px;min-width:40px;
+  padding:0 8px;font-size:.72rem;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+}
+.hbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.hbtn .dot{width:8px;height:8px;border-radius:50%;background:#4ADE80;flex:0 0 auto;}
+.hbtn.warn .dot{background:var(--accent);} .hbtn.off .dot{background:#9CA3AF;}
+@media (max-width:350px){ .mark{font-size:.72rem;letter-spacing:1.6px;padding:5px 6px 5px 8px;} .appbar{gap:8px;padding-left:10px;padding-right:10px;} }
+
+main{padding:14px 14px calc(var(--tabbar-h) + var(--safe-b) + 22px);max-width:900px;margin:0 auto;width:100%;}
+.grid2>*,.line-grid>*,.btn-row>*,.kpis>*{min-width:0;}
+input,select,textarea{max-width:100%;min-width:0;width:100%;}
+.view{display:none;}
+.view.active{display:block;animation:fade .16s ease-out;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+/* ===== tab bar ===== */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;background:#fff;border-top:1px solid var(--line);
+  padding-bottom:var(--safe-b);
+}
+.tabbar button{
+  flex:1 1 0;min-width:0;background:none;border:none;border-top:3px solid transparent;padding:7px 2px 6px;display:flex;flex-direction:column;
+  align-items:center;gap:3px;color:var(--muted);font-size:.74rem;min-height:var(--tabbar-h);justify-content:center;
+}
+.tabbar button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.tabbar button[aria-selected="true"]{color:var(--accent-d);border-top-color:var(--accent);font-weight:700;}
+
+/* ===== blocks ===== */
+.sec{font-size:.8rem;font-weight:700;color:var(--navy);letter-spacing:1.1px;text-transform:uppercase;margin:18px 2px 8px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.sec:first-child{margin-top:2px;}
+.sec .side{font-weight:500;letter-spacing:0;text-transform:none;color:var(--muted);font-size:.76rem;text-align:right;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;}
+.hint{font-size:.78rem;color:var(--muted);line-height:1.5;margin:0 0 10px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid2:has(> .hidden){grid-template-columns:1fr;}
+@media (max-width:339px){.grid2{grid-template-columns:1fr;gap:0;} main{padding-left:10px;padding-right:10px;} .card{padding:12px 11px;}}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+.field label{font-size:.74rem;color:var(--muted);font-weight:500;}
+.field input,.field select,.field textarea{padding:11px 12px;border:1px solid var(--line);border-radius:8px;font-size:16px;background:#fff;min-height:46px;}
+.field textarea{min-height:80px;resize:vertical;line-height:1.45;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent);}
+.field .warn{font-size:.74rem;color:var(--red);}
+
+.btn{width:auto;border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:11px 15px;font-size:.9rem;font-weight:500;min-height:46px;}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
+.btn.primary:active{background:var(--accent-d);}
+.btn.navy{background:var(--navy);color:#fff;}
+.btn.ghost{border-color:var(--line);color:var(--muted);}
+.btn.danger{border-color:var(--red);color:var(--red);}
+.btn.block{width:100%;}
+.btn:disabled{opacity:.5;pointer-events:none;}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap;}
+.btn-row.fill>*{flex:1 1 0;}
+
+.banner{border:1px solid var(--accent);background:var(--sel);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:.86rem;line-height:1.45;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+.banner.bad{border-color:var(--red);background:#FDECEC;}
+.banner .btn{min-height:38px;padding:7px 13px;}
+
+/* ===== KPI cards (daily summary) ===== */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
+.kpi{background:#fff;border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:12px;padding:11px 13px 12px;}
+.kpi .k{font-size:.72rem;color:var(--muted);letter-spacing:.7px;text-transform:uppercase;}
+.kpi .v{font-size:1.32rem;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kpi .v.red{color:var(--red);}
+.kpi .s{font-size:.78rem;color:var(--muted);margin-top:2px;}
+
+/* ===== bill lines ===== */
+.line{border:1px solid var(--line);border-radius:10px;padding:10px 11px;margin-bottom:10px;background:#fff;position:relative;}
+.line .rm{position:absolute;top:6px;right:6px;background:none;border:none;color:var(--muted);font-size:1.05rem;padding:6px 9px;border-radius:8px;line-height:1;z-index:1;}
+.picker{width:100%;text-align:left;border:none;background:none;padding:2px 34px 2px 0;font-size:.98rem;font-weight:500;}
+.picker .meta{display:block;font-size:.74rem;color:var(--muted);margin-top:2px;font-weight:400;}
+.line-grid{display:grid;grid-template-columns:.8fr 1.1fr 1.2fr;gap:8px;margin-top:9px;align-items:end;}
+.line-grid label{display:block;font-size:.7rem;color:var(--muted);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.line-grid input::-webkit-outer-spin-button,.line-grid input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.line-grid input[type=number]{-moz-appearance:textfield;}
+.line-grid input{padding:10px 8px;border:1px solid var(--line);border-radius:8px;font-size:16px;min-height:44px;text-align:right;}
+.amt-box{background:var(--soft);border-radius:8px;min-height:44px;display:flex;align-items:center;justify-content:flex-end;padding:0 9px;font-weight:700;font-variant-numeric:tabular-nums;}
+.addline{width:100%;border:1.5px dashed var(--accent);background:var(--sel);color:var(--accent-d);border-radius:10px;min-height:48px;font-size:.95rem;font-weight:700;}
+
+/* ===== total bar ===== */
+.total-card{
+  position:fixed;left:0;right:0;bottom:calc(var(--tabbar-h) + var(--safe-b));z-index:55;max-width:900px;margin:0 auto;
+  background:#fff;border-top:1px solid var(--line);padding:9px 14px 11px;box-shadow:0 -6px 18px rgba(27,54,93,.12);
+}
+#v-bill{padding-bottom:128px;}
+.total-line{display:flex;justify-content:space-between;align-items:baseline;}
+.total-line .lbl{font-size:.8rem;color:var(--muted);letter-spacing:.7px;text-transform:uppercase;}
+.total-line .val{font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums;}
+.taxline{font-size:.72rem;color:var(--muted);margin:1px 0 8px;line-height:1.4;word-break:break-word;min-height:1em;}
+
+/* ===== lists ===== */
+.tap{width:100%;background:none;border:none;text-align:left;padding:12px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center;}
+.tap:last-child{border-bottom:none;}
+.tap:active{background:var(--soft);}
+.tap .l1{font-weight:500;font-size:.95rem;}
+.tap .l2{display:block;font-size:.78rem;color:var(--muted);margin-top:3px;}
+.tap .no{font-weight:700;color:var(--navy);}
+.tap .amt{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.tap.void .amt,.tap.void .no{text-decoration:line-through;color:var(--muted);}
+.empty{color:var(--muted);font-size:.88rem;padding:22px 4px;text-align:center;line-height:1.6;}
+.badge{font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin-left:5px;vertical-align:1px;white-space:nowrap;}
+.badge.due{border-color:var(--red);color:var(--red);}
+.badge.pend{border-color:var(--accent);color:var(--accent-d);background:var(--sel);}
+.search{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:10px;font-size:16px;min-height:46px;background:#fff;margin-bottom:10px;}
+.mini{background:none;border:1px solid var(--line);border-radius:8px;color:var(--muted);padding:8px 11px;font-size:.8rem;min-height:38px;width:auto;}
+
+/* ===== switches ===== */
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);}
+.sw:last-child{border-bottom:none;}
+.sw b{display:block;font-weight:500;font-size:.94rem;}
+.sw small{display:block;color:var(--muted);font-size:.76rem;margin-top:2px;line-height:1.4;}
+.sw input{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:46px;height:28px;min-width:46px;border-radius:999px;background:#CFC9C0;position:relative;transition:background .15s;margin:0;}
+.sw input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+.sw input:checked{background:var(--accent);}
+.sw input:checked::after{transform:translateX(18px);}
+
+/* ===== sheets ===== */
+.scrim{position:fixed;inset:0;background:rgba(27,54,93,.5);z-index:90;opacity:0;pointer-events:none;transition:opacity .2s;}
+.scrim.open{opacity:1;pointer-events:auto;}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:100;background:var(--bg);border-radius:16px 16px 0 0;max-height:88dvh;display:flex;flex-direction:column;
+  transform:translateY(101%);transition:transform .24s cubic-bezier(.2,.8,.25,1);padding-bottom:var(--safe-b);box-shadow:0 -10px 40px rgba(27,54,93,.3);
+}
+.sheet.open{transform:translateY(0);}
+@media (min-width:760px){
+  .sheet{left:50%;right:auto;bottom:auto;top:50%;width:620px;max-width:92vw;border-radius:14px;transform:translate(-50%,-46%) scale(.97);opacity:0;max-height:84vh;pointer-events:none;}
+  .sheet.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto;}
+}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line);background:#fff;border-radius:16px 16px 0 0;}
+.sheet-head h3{margin:0;font-size:1.02rem;color:var(--navy);}
+.sheet-head .x{background:none;border:none;font-size:1.2rem;color:var(--muted);padding:6px 10px;border-radius:8px;line-height:1;}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 20px;overscroll-behavior:contain;}
+.opt{width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 13px;margin-bottom:8px;font-size:.96rem;}
+.opt:active{background:var(--soft);}
+.opt .m{display:block;font-size:.76rem;color:var(--muted);margin-top:3px;}
+.opt.new{border-style:dashed;border-color:var(--accent);color:var(--accent-d);font-weight:700;background:var(--sel);}
+.drow{display:flex;justify-content:space-between;gap:14px;padding:6px 0;font-size:.9rem;}
+.drow span:first-child{color:var(--muted);}
+.drow span:last-child{text-align:right;font-weight:500;}
+.drow.grand{border-top:2px solid var(--navy);margin-top:6px;padding-top:9px;font-size:1.12rem;font-weight:700;}
+.drow.grand span{color:var(--ink)!important;font-weight:700!important;}
+.stamp{border:2px solid var(--red);color:var(--red);font-weight:700;letter-spacing:2px;text-align:center;padding:7px;border-radius:8px;margin-bottom:12px;}
+
+/* ===== about / weave ===== */
+.about{text-align:center;}
+.weave{display:inline-block;margin:6px 0 4px;}
+.weave img{height:44px;max-width:200px;transition:filter .15s;display:block;}
+.weave:hover img,.weave:active img{filter:brightness(.78);}
+
+/* ===== toast ===== */
+#toast{
+  position:fixed;left:50%;transform:translateX(-50%) translateY(-12px);top:calc(var(--safe-t) + 74px);z-index:120;width:max-content;
+  background:#292524;color:#fff;padding:11px 16px;border-radius:10px;font-size:.88rem;max-width:88vw;text-align:center;opacity:0;pointer-events:none;transition:all .22s;line-height:1.45;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.ok{background:var(--ok);} #toast.err{background:var(--red);}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<header class="appbar">
+  <span class="mark">PULSE</span>
+  <div class="brand">
+    <h1 id="barTitle">Billing</h1>
+    <span class="sub" id="barSub">New bill</span>
+  </div>
+  <button class="hbtn" id="syncPill" onclick="syncNow()" aria-label="Sync"><span class="dot"></span><span id="syncTxt">Synced</span></button>
+  <button class="hbtn" onclick="askSettings()" aria-label="Settings">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7.5 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3 15H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 8.5l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 10 4.6V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+  </button>
+</header>
+
+<main>
+<div class="banner hidden" id="updBanner"><span>A new version of Pulse is ready.</span><button class="btn primary" onclick="doUpdate()">Update now</button></div>
+
+<!-- ================= BILL ================= -->
+<section class="view active" id="v-bill">
+  <div class="banner bad hidden" id="notLinked">
+    <span style="flex:1 1 180px;">This phone is not connected yet. Paste the setup link you were sent.</span>
+    <div style="display:flex;gap:8px;width:100%;">
+      <input id="setupPaste" class="search" style="margin:0;" placeholder="Setup link" autocomplete="off">
+      <button class="btn primary" onclick="pasteSetup()">Connect</button>
+    </div>
+  </div>
+  <div class="banner hidden" id="installBanner"><span>Install Pulse on this phone for one-tap billing.</span><button class="btn navy" onclick="installApp()">Install</button></div>
+
+  <div class="sec">Buyer <span class="side" id="nextNoLbl"></span></div>
+  <div class="card">
+    <div class="field">
+      <label for="buyerName">Name</label>
+      <div style="display:flex;gap:8px;">
+        <input id="buyerName" placeholder="Customer or firm name" autocomplete="off" style="flex:1 1 0;">
+        <button class="btn ghost" style="flex:0 0 auto;padding:11px 13px;" onclick="openCustomerPicker()">Saved</button>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label for="buyerMobile">Mobile</label><input id="buyerMobile" inputmode="numeric" placeholder="10-digit" autocomplete="off"></div>
+      <div class="field" data-f="gst"><label for="buyerGSTIN">GSTIN (optional)</label><input id="buyerGSTIN" placeholder="22ABCDE1234F1Z5" autocomplete="off" maxlength="15" style="text-transform:uppercase"></div>
+    </div>
+    <div class="field hidden" id="gstinWarnBox" style="margin-top:-6px;"><span class="warn" id="gstinWarn"></span></div>
+    <div class="field"><label for="buyerAddress">Address</label><input id="buyerAddress" placeholder="Village / Town, District" autocomplete="off"></div>
+    <div class="grid2">
+      <div class="field" style="margin-bottom:0;"><label for="billDate">Bill date</label><input id="billDate" type="date"></div>
+      <div class="field" style="margin-bottom:0;" data-f="gst"><label for="placeOfSupply">Place of supply</label><select id="placeOfSupply"></select></div>
+    </div>
+  </div>
+
+  <div class="sec">Items <span class="side" id="lineCount"></span></div>
+  <div id="lines"></div>
+  <button class="addline" onclick="openItemPicker('')">＋ Add item</button>
+
+  <div data-f="extras">
+    <div class="sec">Charges &amp; payment <span class="side">optional</span></div>
+    <div class="card">
+      <div class="grid2" data-f="charges">
+        <div class="field"><label for="xTransport" id="lblCharge1">Delivery charges ₹</label>
+          <input id="xTransport" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" oninput="recalc()"></div>
+        <div class="field"><label for="xLabour" id="lblCharge2">Other charges ₹</label>
+          <input id="xLabour" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" oninput="recalc()"></div>
+      </div>
+      <div class="field" style="margin-bottom:0;" data-f="credit"><label for="xCredit">Credit ₹ (amount left unpaid)</label>
+        <input id="xCredit" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0 = fully paid" oninput="recalc()"></div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:14px;"><button class="mini" onclick="clearBill()">Clear this bill</button></div>
+
+  <div class="total-card">
+    <div class="total-line"><span class="lbl">Total</span><span class="val" id="sTotal">₹ 0</span></div>
+    <div class="taxline" id="sTax"></div>
+    <button class="btn primary block" id="genBtn" onclick="chooseBillType()">Save &amp; make PDF</button>
+  </div>
+</section>
+
+<!-- ================= HISTORY ================= -->
+<section class="view" id="v-history">
+  <div id="summaryBox"></div>
+  <div class="sec">Bills <span class="side"><button class="mini" onclick="pullHistory()">Refresh</button></span></div>
+  <div class="card">
+    <input class="search" id="histSearch" placeholder="Search bill no., name or mobile" oninput="renderHistory()" autocomplete="off">
+    <div id="histBody"></div>
+  </div>
+</section>
+
+<!-- ================= ITEMS ================= -->
+<section class="view" id="v-items">
+  <div class="sec">Item list <span class="side" id="itemCount"></span></div>
+  <div class="card">
+    <input class="search" id="itemSearch" placeholder="Search items" oninput="renderItems()" autocomplete="off">
+    <div id="itemsBody"></div>
+    <div class="btn-row fill" style="margin-top:12px;">
+      <button class="btn" onclick="editItem(-1)">＋ New item</button>
+      <button class="btn primary hidden" id="itemsSaveBtn" onclick="syncNow()">Save changes</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PARTIES ================= -->
+<section class="view" id="v-customers">
+  <div id="duesBox"></div>
+  <div class="sec">Parties <span class="side" id="custCount"></span></div>
+  <div class="card">
+    <input class="search" id="custSearch" placeholder="Search name or mobile" oninput="renderCustomers()" autocomplete="off">
+    <div id="custBody"></div>
+    <button class="btn block" style="margin-top:12px;" onclick="editCustomer(-1)">＋ New party</button>
+  </div>
+</section>
+
+<!-- ================= SETTINGS (password locked) ================= -->
+<section class="view" id="v-settings">
+  <div class="sec">Connection <span class="side" id="connState"></span></div>
+  <div class="card">
+    <p class="hint">Each client has their own Google Sheet. Paste that sheet's web app URL (ends in /exec) and its access word.</p>
+    <div class="field"><label for="cUrl">Web app URL</label><input id="cUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"></div>
+    <div class="field"><label for="cToken">Access word (SHARED_TOKEN in Code.gs)</label><input id="cToken" autocomplete="off"></div>
+    <div class="btn-row fill">
+      <button class="btn primary" onclick="saveConnection()">Connect &amp; test</button>
+      <button class="btn" onclick="copySetupLink()">Copy setup link</button>
+    </div>
+    <p class="hint" id="connNote" style="margin:10px 0 0;"></p>
+  </div>
+
+  <div class="sec">Shop details</div>
+  <div class="card">
+    <div class="field"><label for="cShopName">Business name</label><input id="cShopName"></div>
+    <div class="field"><label for="cShopSub">Address and phone (printed under the name)</label><textarea id="cShopSub" rows="3"></textarea></div>
+    <div class="grid2">
+      <div class="field"><label for="cGstin">GSTIN (blank if unregistered)</label><input id="cGstin" maxlength="15" style="text-transform:uppercase"></div>
+      <div class="field"><label for="cHomeState">State</label><select id="cHomeState"></select></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label for="cPrefix">GST bill prefix</label><input id="cPrefix" maxlength="6" placeholder="INV" style="text-transform:uppercase"></div>
+      <div class="field"><label for="cBank">Bank line (optional)</label><input id="cBank" placeholder="A/c, IFSC, bank"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label for="cCharge1">Extra charge 1 name</label><input id="cCharge1" placeholder="Delivery charges"></div>
+      <div class="field"><label for="cCharge2">Extra charge 2 name</label><input id="cCharge2" placeholder="Other charges"></div>
+    </div>
+    <div class="field" style="margin-bottom:0;"><label for="cTerms">Terms printed on GST bills</label><textarea id="cTerms" rows="3"></textarea></div>
+  </div>
+
+  <div class="sec">Features</div>
+  <div class="card" style="padding-top:4px;padding-bottom:4px;">
+    <label class="sw"><span><b>GST bill</b><small>Tax invoice with HSN and CGST / SGST / IGST</small></span><input type="checkbox" id="f_gst"></label>
+    <label class="sw"><span><b>Non-GST bill</b><small>Plain bill with its own number series</small></span><input type="checkbox" id="f_cash"></label>
+    <label class="sw"><span><b>Extra charges</b><small>Two charge boxes added to the total without GST</small></span><input type="checkbox" id="f_charges"></label>
+    <label class="sw"><span><b>Credit sales &amp; payment log</b><small>Unpaid amount on a bill, and payments received later</small></span><input type="checkbox" id="f_credit"></label>
+    <label class="sw"><span><b>History tab</b><small>Past bills, reprint, cancel</small></span><input type="checkbox" id="f_history"></label>
+    <label class="sw"><span><b>Daily summary</b><small>Today's sales and collections on the History tab</small></span><input type="checkbox" id="f_summary"></label>
+    <label class="sw"><span><b>PIN to cancel a bill</b><small>Staff must enter the owner's PIN before a bill is cancelled</small></span><input type="checkbox" id="f_cancelPin"></label>
+    <div class="field" style="margin:10px 0 10px;"><label for="cPin">Owner's cancel PIN <span id="pinState"></span></label>
+      <input id="cPin" type="password" inputmode="numeric" maxlength="8" placeholder="4 to 8 digits" autocomplete="new-password"></div>
+  </div>
+  <button class="btn primary block" onclick="saveSettings()">Save shop details &amp; features</button>
+  <p class="hint" style="margin:8px 2px 0;">Saved in the client's sheet, so every phone of this client gets the same setup.</p>
+
+  <div class="sec">Bill numbering</div>
+  <div class="card">
+    <div class="field"><label for="cStartNo">Next GST bill number</label>
+      <div style="display:flex;gap:8px;"><input id="cStartNo" type="number" inputmode="numeric" min="1"><button class="btn" style="flex:0 0 auto;" onclick="setStartNumber(false)">Set</button></div></div>
+    <div class="field" style="margin-bottom:0;"><label for="cStartCash">Next non-GST bill number</label>
+      <div style="display:flex;gap:8px;"><input id="cStartCash" type="number" inputmode="numeric" min="1"><button class="btn" style="flex:0 0 auto;" onclick="setStartNumber(true)">Set</button></div></div>
+    <p class="hint" id="numNote" style="margin:10px 0 0;"></p>
+  </div>
+
+  <div class="sec">This phone</div>
+  <div class="card">
+    <p class="hint" id="stateNote"></p>
+    <div class="btn-row fill">
+      <button class="btn" onclick="exportBackup()">Download backup</button>
+      <button class="btn" onclick="document.getElementById('restoreFile').click()">Restore backup</button>
+    </div>
+    <input type="file" id="restoreFile" accept="application/json,.json" class="hidden" onchange="restoreBackup(this)">
+    <button class="btn danger block" style="margin-top:10px;" onclick="disconnectPhone()">Disconnect this phone (switch client)</button>
+  </div>
+
+  <div class="sec">About</div>
+  <div class="card about">
+    <div style="font-weight:700;color:var(--navy);">Pulse <span id="verLbl"></span></div>
+    <div class="btn-row fill" style="margin:10px 0 14px;">
+      <button class="btn" onclick="checkUpdate(true)">Check for update</button>
+      <button class="btn hidden" id="installBtn2" onclick="installApp()">Install app</button>
+    </div>
+    <a class="weave" href="https://weavesolution.com/" target="_blank" rel="noopener" title="Weave Solutions">
+      <img src="https://weavesolution.com/assets/logo.png" alt="Weave Solutions" onerror="this.outerHTML='<b style=&quot;color:#1B365D;font-size:1.05rem;&quot;>Weave Solutions</b>'"></a>
+    <div class="hint" style="margin:4px 0 0;">Software by Weave Solutions, Raipur · weavesolution.com</div>
+  </div>
+  <button class="btn block" onclick="go(lastTab)">Done</button>
+</section>
+</main>
+
+<nav class="tabbar" role="tablist">
+  <button role="tab" aria-selected="true" onclick="go('bill')" data-tab="bill">
+    <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Bill</button>
+  <button role="tab" aria-selected="false" onclick="go('history')" data-tab="history">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</button>
+  <button role="tab" aria-selected="false" onclick="go('items')" data-tab="items">
+    <svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg>Items</button>
+  <button role="tab" aria-selected="false" onclick="go('customers')" data-tab="customers">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M17 8.2a2.8 2.8 0 0 1 0 5.6M17.5 19a5 5 0 0 0-1.6-3.6"/></svg>Parties</button>
+</nav>
+
+<div class="scrim" id="scrim" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true">
+  <div class="sheet-head"><h3 id="sheetTitle"></h3><button class="x" onclick="closeSheet()" aria-label="Close">✕</button></div>
+  <div class="sheet-body" id="sheetBody"></div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+/* =====================================================================
+   PULSE — one repo, many clients. Nothing about a client lives in this
+   file: each phone is pointed at its client's Google Sheet once (setup
+   link or Settings) and the shop details come down from that sheet.
+   APP_VERSION must match VERSION in sw.js.
+   ===================================================================== */
+const APP_VERSION = '1.1.0';
+const PW_HASH = '1a94d71500c9b7efa14e950be2b5669e01aa2c7db657c353923d2019a15053a0';   // settings password (SHA-256)
+
+const DEFAULT_CONFIG = {
+  shopName:'', shopSub:'', gstin:'', homeState:'Chhattisgarh', bank:'', gstPrefix:'INV',
+  terms:'1) Goods once sold will not be taken back.\n2) Subject to local jurisdiction only.',
+  charge1:'Delivery charges', charge2:'Other charges',
+  f_gst:true, f_cash:true, f_charges:true, f_credit:true, f_history:true, f_summary:true,
+  f_cancelPin:false, cancelPinHash:'',
+  scriptUrl:'', token:''
+};
+/* Keys saved in the client's sheet (everything except the connection itself). */
+const SHARED_KEYS = ['shopName','shopSub','gstin','homeState','bank','gstPrefix','terms','charge1','charge2',
+                     'f_gst','f_cash','f_charges','f_credit','f_history','f_summary','f_cancelPin','cancelPinHash'];
+const UNITS = ['PCS','NOS','KG','GM','LTR','ML','MTR','FT','SQFT','CFT','BAG','BOX','PKT','DOZ','SET','PAIR','BTL','ROLL','QTL','TON','HRS','JOB'];
+const GST_RATES = [0,0.25,3,5,18,40];
+const STATE_CODES = {'01':'Jammu and Kashmir','02':'Himachal Pradesh','03':'Punjab','04':'Chandigarh','05':'Uttarakhand','06':'Haryana',
+ '07':'Delhi','08':'Rajasthan','09':'Uttar Pradesh','10':'Bihar','11':'Sikkim','12':'Arunachal Pradesh','13':'Nagaland','14':'Manipur',
+ '15':'Mizoram','16':'Tripura','17':'Meghalaya','18':'Assam','19':'West Bengal','20':'Jharkhand','21':'Odisha','22':'Chhattisgarh',
+ '23':'Madhya Pradesh','24':'Gujarat','26':'Dadra and Nagar Haveli and Daman and Diu','27':'Maharashtra','29':'Karnataka','30':'Goa',
+ '31':'Lakshadweep','32':'Kerala','33':'Tamil Nadu','34':'Puducherry','35':'Andaman and Nicobar Islands','36':'Telangana',
+ '37':'Andhra Pradesh','38':'Ladakh'};
+const STATES = Object.values(STATE_CODES).sort();
+
+/* =====================================================================
+   LOCAL STORE — every write lands here first, so nothing is ever lost.
+   ===================================================================== */
+const K = {cfg:'pulse.cfg', cat:'pulse.catalog', cust:'pulse.customers', inv:'pulse.invoices', pay:'pulse.payments',
+           q:'pulse.queue', next:'pulse.next', nextCash:'pulse.nextCash', sync:'pulse.lastSync', draft:'pulse.draft',
+           setup:'pulse.pendingSetup'};
+const T_GST = 'GST', T_CASH = 'NON-GST';
+
+function isCash(t){ return String(t||'').toUpperCase().indexOf('NON') === 0; }
+function load(k,d){ try{ const v = localStorage.getItem(k); return v===null ? d : JSON.parse(v); }catch(e){ return d; } }
+function save(k,v){
+  try{ localStorage.setItem(k, JSON.stringify(v)); return true; }
+  catch(e){ toast('Phone storage is full. Ask your software provider to take a backup.','err'); return false; }
+}
+/* Bills use one set of field names everywhere, whether made here or pulled from the sheet. */
+function normInv(r){
+  const o = Object.assign({}, r);
+  if(o.buyerMobile === undefined)  o.buyerMobile  = o.mobile || '';
+  if(o.buyerAddress === undefined) o.buyerAddress = o.address || '';
+  if(o.buyerGSTIN === undefined)   o.buyerGSTIN   = o.gstin || '';
+  if(o.placeOfSupply === undefined) o.placeOfSupply = o.pos || '';
+  if(o.taxableValue === undefined) o.taxableValue = o.taxable || 0;
+  delete o.mobile; delete o.address; delete o.gstin; delete o.pos; delete o.taxable;
+  o.billType = isCash(o.billType) ? T_CASH : T_GST;
+  o.status = String(o.status||'ACTIVE').toUpperCase();
+  return o;
+}
+
+let CFG       = Object.assign({}, DEFAULT_CONFIG, load(K.cfg, {}));
+let CATALOG   = load(K.cat, []) || [];
+let CUSTOMERS = load(K.cust, []) || [];
+let INVOICES  = (load(K.inv, []) || []).map(normInv);
+let PAYMENTS  = load(K.pay, []) || [];
+let QUEUE     = Object.assign({invoices:[], customers:[], payments:[], cancels:[], catalogDirty:false, catalogRev:0,
+                               configDirty:false, configRev:0}, load(K.q, {}));
+['invoices','customers','payments','cancels'].forEach(k => { if(!Array.isArray(QUEUE[k])) QUEUE[k] = []; });
+let NEXTNO    = load(K.next, null);
+let NEXTCASH  = load(K.nextCash, null);
+
+function F(k){
+  if((k === 'f_gst' || k === 'f_cash') && CFG.f_gst === false && CFG.f_cash === false) return true;
+  if(k === 'f_summary' && CFG.f_history === false) return false;
+  return CFG[k] !== false;
+}
+function esc(s){ return (s===null||s===undefined?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function inr(n){ return (Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function inr0(n){ return Math.round(Number(n)||0).toLocaleString('en-IN'); }
+function r2(n){ return Math.round((Number(n)||0)*100)/100; }
+function uid(p){ return (p||'c') + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function isoToDMY(s){ if(!s) return ''; const p=s.split('-'); return p.length===3 ? p[2]+'-'+p[1]+'-'+p[0] : s; }
+function todayDMY(){ return isoToDMY(todayISO()); }
+function nowTime(){
+  const d = new Date(); let h = d.getHours(); const ap = h >= 12 ? 'pm' : 'am'; h = h % 12 || 12;
+  return String(h).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ' ' + ap;
+}
+function val(id){ const e=document.getElementById(id); return e ? e.value : ''; }
+function $(id){ return document.getElementById(id); }
+
+let toastTimer;
+function toast(msg, cls){
+  const t = $('toast');
+  t.innerHTML = msg; t.className = 'show ' + (cls||'');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.className=''; }, cls==='err' ? 5500 : 3000);
+}
+
+/* GSTIN: first two digits are the state, the last character is a checksum. */
+function gstinOk(g){
+  g = String(g||'').toUpperCase();
+  if(!/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/.test(g)) return false;
+  const A = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let s = 0;
+  for(let i=0;i<14;i++){ const p = A.indexOf(g[i]) * (i%2 ? 2 : 1); s += Math.floor(p/36) + p%36; }
+  return A[(36 - s%36) % 36] === g[14];
+}
+function gstinProblem(g){
+  g = String(g||'').trim().toUpperCase();
+  if(!g) return '';
+  if(g.length !== 15) return 'GSTIN must be 15 characters — this has ' + g.length + '.';
+  if(!STATE_CODES[g.slice(0,2)]) return 'GSTIN starts with an unknown state code.';
+  if(!gstinOk(g)) return 'GSTIN looks mistyped — please check it.';
+  return '';
+}
+
+/* =====================================================================
+   NAVIGATION
+   ===================================================================== */
+const TAB_TITLES = {bill:'New bill', history:'History', items:'Item list', customers:'Parties', settings:'Settings'};
+let currentTab = 'bill', lastTab = 'bill';
+const scrollMemo = {};
+function go(tab){
+  if(tab === 'history' && !F('f_history')) tab = 'bill';
+  scrollMemo[currentTab] = window.scrollY;
+  if(tab !== 'settings') lastTab = tab;
+  currentTab = tab;
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'v-'+tab));
+  document.querySelectorAll('.tabbar button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab===tab ? 'true':'false'));
+  paintHeader();
+  window.scrollTo(0, tab === 'settings' ? 0 : (scrollMemo[tab] || 0));
+  if(tab==='history') renderHistory();
+  if(tab==='items') renderItems();
+  if(tab==='customers') renderCustomers();
+}
+function paintHeader(){
+  $('barTitle').textContent = CFG.shopName || 'Billing';
+  $('barSub').textContent = TAB_TITLES[currentTab] || '';
+}
+
+/* Bottom sheet. Opening one adds a history step, so the phone's Back button
+   closes the sheet instead of leaving the app. */
+let sheetOpen = false;
+function openSheet(title, html){
+  $('sheetTitle').textContent = title;
+  $('sheetBody').innerHTML = html;
+  $('sheetBody').scrollTop = 0;
+  $('sheet').classList.add('open');
+  $('scrim').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if(!sheetOpen){ sheetOpen = true; try{ history.pushState({sheet:1}, ''); }catch(e){} }
+}
+function hideSheet(){
+  sheetOpen = false;
+  $('sheet').classList.remove('open');
+  $('scrim').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeSheet(){
+  if(!sheetOpen) return;
+  hideSheet();
+  try{ if(history.state && history.state.sheet) history.back(); }catch(e){}
+}
+window.addEventListener('popstate', () => { if(sheetOpen) hideSheet(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeSheet(); });
+
+/* =====================================================================
+   BILL — lines
+   ===================================================================== */
+let lineSeq = 0;
+function addLine(it, qty){
+  lineSeq++;
+  const id = 'ln'+lineSeq;
+  const d = document.createElement('div');
+  d.className = 'line'; d.id = id;
+  d.innerHTML =
+    '<button class="rm" aria-label="Remove item" onclick="removeLine(\''+id+'\')">✕</button>' +
+    '<button class="picker" id="'+id+'-pick" onclick="openItemPicker(\''+id+'\')"></button>' +
+    '<div class="line-grid">' +
+      '<div><label class="ql">Qty</label><input class="q" type="number" inputmode="decimal" min="0" step="any" value="'+(qty===undefined?1:qty)+'" oninput="recalc()"></div>' +
+      '<div><label>Rate ₹</label><input class="r" type="number" inputmode="decimal" min="0" step="0.01" value="0" oninput="recalc()"></div>' +
+      '<div><label>Amount ₹</label><div class="amt-box a">0.00</div></div>' +
+    '</div>';
+  $('lines').appendChild(d);
+  applyItemToLine(id, it);
+  return id;
+}
+function removeLine(id){ const el=$(id); if(el) el.remove(); recalc(); }
+function applyItemToLine(id, it){
+  const d = $(id);
+  if(!d) return;
+  d.dataset.name = it.name || '';
+  d.dataset.hsn  = it.hsn || '';
+  d.dataset.unit = it.unit || 'PCS';
+  d.dataset.gst  = String(it.gst===undefined || it.gst==='' ? 0 : it.gst);
+  const meta = [];
+  if(F('f_gst')){ if(it.hsn) meta.push('HSN '+esc(it.hsn)); meta.push('GST '+esc(d.dataset.gst)+'%'); }
+  $(id+'-pick').innerHTML = esc(it.name) + (meta.length ? '<span class="meta">'+meta.join(' · ')+'</span>' : '');
+  d.querySelector('.ql').textContent = 'Qty (' + d.dataset.unit + ')';
+  if(it.rate !== undefined) d.querySelector('.r').value = Number(it.rate) || 0;
+  recalc();
+}
+function clearBill(){
+  if(!confirm('Clear this bill — buyer, items and charges?')) return;
+  resetForm(); toast('Bill cleared.');
+}
+
+function openItemPicker(lineId){
+  openSheet(lineId ? 'Change item' : 'Add item',
+    '<input class="search" id="pickSearch" placeholder="Search or type a new item" autocomplete="off" oninput="renderPickList(\''+lineId+'\')">' +
+    '<div id="pickList"></div>');
+  renderPickList(lineId);
+  setTimeout(()=>{ const s=$('pickSearch'); if(s && window.innerWidth>760) s.focus(); }, 260);
+}
+function itemMeta(it){
+  const bits = ['₹' + inr(it.rate) + ' / ' + esc(it.unit||'PCS')];
+  if(F('f_gst')){ bits.push('GST ' + (Number(it.gst)||0) + '%'); if(it.hsn) bits.push('HSN ' + esc(it.hsn)); }
+  return bits.join(' · ');
+}
+function renderPickList(lineId){
+  const q = val('pickSearch').trim().toLowerCase();
+  const hits = CATALOG.map((it,idx)=>({it,idx})).filter(({it}) => !q || String(it.name).toLowerCase().includes(q) || String(it.hsn||'').includes(q));
+  let html = hits.slice(0,200).map(({it,idx}) =>
+    '<button class="opt" onclick="pickCatalogItem(\''+lineId+'\','+idx+')">' + esc(it.name) + '<span class="m">' + itemMeta(it) + '</span></button>').join('');
+  if(!hits.length) html = '<p class="empty">' + (CATALOG.length ? 'No item matches that.' : 'No items saved yet.') + '</p>';
+  html += '<button class="opt new" onclick="openCustomItem(\''+lineId+'\')">＋ ' + (q ? 'Add “' + esc(val('pickSearch').trim()) + '” as a new item' : 'New item') + '</button>';
+  $('pickList').innerHTML = html;
+}
+function pickCatalogItem(lineId, idx){
+  const it = CATALOG[idx]; if(!it) return;
+  if(lineId) applyItemToLine(lineId, it); else addLine(it);
+  closeSheet();
+}
+function gstOptions(sel){
+  const rates = GST_RATES.slice(); const s = Number(sel)||0;
+  if(!rates.includes(s)) rates.push(s);
+  return rates.sort((a,b)=>a-b).map(g => '<option value="'+g+'"'+(g===s?' selected':'')+'>'+g+'%</option>').join('');
+}
+function itemFormHtml(p, it){
+  const gstOn = F('f_gst');
+  return '<div class="field"><label>Item name</label><input id="'+p+'Name" value="'+esc(it.name)+'" autocomplete="off"></div>' +
+    '<div class="grid2"><div class="field"><label>Unit</label><select id="'+p+'Unit">'+
+      UNITS.concat(UNITS.includes(it.unit)||!it.unit?[]:[it.unit]).map(u=>'<option'+(u===(it.unit||'PCS')?' selected':'')+'>'+esc(u)+'</option>').join('')+'</select></div>' +
+    '<div class="field"><label>Rate ₹' + (gstOn ? ' (incl. GST)' : '') + '</label><input id="'+p+'Rate" type="number" inputmode="decimal" step="0.01" value="'+(Number(it.rate)||'')+'" placeholder="0"></div></div>' +
+    '<div class="grid2'+(gstOn?'':' hidden')+'"><div class="field"><label>GST %</label><select id="'+p+'Gst">'+gstOptions(it.gst)+'</select></div>' +
+    '<div class="field"><label>HSN / SAC</label><input id="'+p+'Hsn" inputmode="numeric" value="'+esc(it.hsn||'')+'" autocomplete="off"></div></div>';
+}
+function readItemForm(p){
+  return {name:val(p+'Name').trim(), hsn:val(p+'Hsn').trim(), unit:val(p+'Unit') || 'PCS',
+          rate:parseFloat(val(p+'Rate'))||0, gst:parseFloat(val(p+'Gst'))||0};
+}
+function openCustomItem(lineId){
+  const pre = val('pickSearch').trim();
+  openSheet('New item', itemFormHtml('ci', {name:pre, unit:'PCS', rate:0, gst:F('f_gst') ? 18 : 0, hsn:''}) +
+    '<label class="sw" style="border:none;padding-top:2px;"><span><b>Save in my item list</b><small>So it can be picked next time</small></span><input type="checkbox" id="ciSave" checked></label>' +
+    '<button class="btn primary block" style="margin-top:6px;" onclick="commitCustomItem(\''+lineId+'\')">Use this item</button>');
+}
+function commitCustomItem(lineId){
+  const it = readItemForm('ci');
+  if(!it.name){ toast('Give the item a name.','err'); return; }
+  if($('ciSave').checked && !CATALOG.some(c => String(c.name).toLowerCase() === it.name.toLowerCase())){
+    CATALOG.push(it); catalogChanged();
+  }
+  if(lineId) applyItemToLine(lineId, it); else addLine(it);
+  closeSheet();
+}
+function catalogChanged(){
+  save(K.cat, CATALOG); QUEUE.catalogDirty = true; QUEUE.catalogRev = (QUEUE.catalogRev|0) + 1; save(K.q, QUEUE); refreshSyncUI();
+}
+
+function openCustomerPicker(){
+  if(!CUSTOMERS.length){ toast('No saved parties yet. They are remembered automatically when a bill has a mobile number.'); return; }
+  openSheet('Saved parties', '<input class="search" id="cpSearch" placeholder="Search name or mobile" oninput="renderCustPick()" autocomplete="off"><div id="cpList"></div>');
+  renderCustPick();
+}
+function renderCustPick(){
+  const q = val('cpSearch').trim().toLowerCase();
+  const hits = CUSTOMERS.map((c,idx)=>({c,idx})).filter(({c}) => !q || String(c.name||'').toLowerCase().includes(q) || String(c.mobile||'').includes(q));
+  $('cpList').innerHTML = hits.length
+    ? hits.slice(0,200).map(({c,idx}) => '<button class="opt" onclick="useCustomer('+idx+')">' + esc(c.name) +
+        '<span class="m">' + esc(c.mobile||'no mobile') + (c.address ? ' · '+esc(c.address) : '') + '</span></button>').join('')
+    : '<p class="empty">No match.</p>';
+}
+function useCustomer(idx){
+  const c = CUSTOMERS[idx]; if(!c) return;
+  $('buyerName').value = c.name||''; $('buyerMobile').value = c.mobile||'';
+  $('buyerAddress').value = c.address||''; $('buyerGSTIN').value = c.gstin||'';
+  onGstinInput(); closeSheet(); saveDraft();
+}
+
+/* Buyer GSTIN → place of supply, plus a typo check. */
+function onGstinInput(){
+  const el = $('buyerGSTIN');
+  const g = el.value.trim().toUpperCase();
+  const st = STATE_CODES[g.slice(0,2)];
+  if(g.length >= 2 && st) $('placeOfSupply').value = st;
+  const prob = g.length === 15 ? gstinProblem(g) : '';
+  $('gstinWarn').textContent = prob;
+  $('gstinWarnBox').classList.toggle('hidden', !prob);
+  recalc();
+}
+
+/* =====================================================================
+   CALCULATIONS — the rate includes GST; tax is backed out of it
+   ===================================================================== */
+function collectLines(){
+  return [...document.querySelectorAll('#lines .line')].map(d => {
+    const qty  = parseFloat(d.querySelector('.q').value)||0;
+    const rate = parseFloat(d.querySelector('.r').value)||0;
+    const gst  = parseFloat(d.dataset.gst)||0;
+    const amount  = r2(qty*rate);
+    const taxable = r2(gst>0 ? amount/(1+gst/100) : amount);
+    return {name:d.dataset.name, hsn:d.dataset.hsn, unit:d.dataset.unit, gst, qty, rate, amount, taxable};
+  }).filter(r => r.name && r.qty > 0);
+}
+function isIntrastate(pos){
+  return String(pos === undefined ? val('placeOfSupply') : pos).trim().toLowerCase() === String(CFG.homeState||'').trim().toLowerCase();
+}
+/* Extra charges sit outside GST: added after tax, never part of the taxable value. */
+function computeTotals(rows, intra, cash, extras){
+  const ex = extras || {};
+  const transport = r2(ex.transport), labour = r2(ex.labour), addOn = transport + labour;
+  let raw = 0; rows.forEach(r => raw += Number(r.amount)||0);
+  if(cash){
+    const tot = Math.round(raw + addOn);
+    return {intrastate:intra, cash:true, taxable:r2(raw), cgst:0, sgst:0, igst:0, transport, labour,
+            roundOff:r2(tot-raw-addOn), total:tot, byRate:{}};
+  }
+  let taxable=0,cgst=0,sgst=0,igst=0; const byRate={};
+  rows.forEach(r => {
+    const gstAmt = r2(r.amount - r.taxable);
+    const c = intra ? r2(gstAmt/2) : 0;
+    const s = intra ? r2(gstAmt - c) : 0;        // SGST takes the remainder, so the halves always add back
+    const i = intra ? 0 : gstAmt;
+    taxable+=r.taxable; cgst+=c; sgst+=s; igst+=i;
+    const b = byRate[r.gst] || (byRate[r.gst] = {taxable:0,cgst:0,sgst:0,igst:0});
+    b.taxable+=r.taxable; b.cgst+=c; b.sgst+=s; b.igst+=i;
+  });
+  const total = Math.round(raw + addOn);
+  return {intrastate:intra, taxable:r2(taxable), cgst:r2(cgst), sgst:r2(sgst), igst:r2(igst), transport, labour,
+          roundOff:r2(total-raw-addOn), total, byRate};
+}
+function extras(){
+  if(!F('f_charges')) return {transport:0, labour:0};
+  return {transport: Math.max(0, parseFloat(val('xTransport'))||0), labour: Math.max(0, parseFloat(val('xLabour'))||0)};
+}
+function creditAmt(){ return F('f_credit') ? Math.max(0, parseFloat(val('xCredit'))||0) : 0; }
+
+function recalc(){
+  document.querySelectorAll('#lines .line').forEach(d => {
+    d.querySelector('.a').textContent = inr((parseFloat(d.querySelector('.q').value)||0) * (parseFloat(d.querySelector('.r').value)||0));
+  });
+  const rows = collectLines();
+  const t = computeTotals(rows, isIntrastate(), !F('f_gst'), extras());
+  $('sTotal').textContent = '₹ ' + inr0(t.total);
+  const n = document.querySelectorAll('#lines .line').length;
+  $('lineCount').textContent = n ? n + (n===1 ? ' item' : ' items') : '';
+  const bits = [];
+  if(rows.length && F('f_gst')) bits.push((F('f_cash') ? 'On a GST bill: ' : '') + 'taxable ' + inr(t.taxable) +
+    (t.intrastate ? ' · CGST ' + inr(t.cgst) + ' · SGST ' + inr(t.sgst) : ' · IGST ' + inr(t.igst)));
+  const cr = Math.min(creditAmt(), t.total);
+  if(cr > 0) bits.push('Credit ' + inr0(cr) + ', received ' + inr0(t.total - cr));
+  $('sTax').textContent = bits.join(' · ');
+  saveDraft();
+}
+
+function inWords(num){
+  num = Math.round(Math.abs(num));
+  if(num===0) return 'Zero';
+  const a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const b=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  const two=n=> n<20 ? a[n] : b[Math.floor(n/10)] + (n%10 ? ' '+a[n%10] : '');
+  const three=n=> n>99 ? a[Math.floor(n/100)]+' Hundred'+(n%100 ? ' '+two(n%100) : '') : two(n);
+  let n=num, s='';
+  const cr=Math.floor(n/10000000); n%=10000000;
+  const lk=Math.floor(n/100000);   n%=100000;
+  const th=Math.floor(n/1000);     n%=1000;
+  if(cr) s+=three(cr)+' Crore ';
+  if(lk) s+=three(lk)+' Lakh ';
+  if(th) s+=three(th)+' Thousand ';
+  if(n)  s+=three(n);
+  return s.trim();
+}
+
+/* The bill date follows today's date unless the user picked another one —
+   an app left open overnight must not date the morning's first bill yesterday. */
+let dateTouched = false;
+function freshenDate(){ if(!dateTouched && val('billDate') !== todayISO()) $('billDate').value = todayISO(); }
+
+/* Draft autosave — a half-made bill survives a phone lock or a crash. */
+let draftTimer;
+function saveDraft(){
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(()=>{
+    save(K.draft, {
+      buyerName: val('buyerName'), buyerMobile: val('buyerMobile'), buyerAddress: val('buyerAddress'), buyerGSTIN: val('buyerGSTIN'),
+      billDate: val('billDate'), dateTouched, savedOn: todayISO(), pos: val('placeOfSupply'),
+      transport: val('xTransport'), labour: val('xLabour'), credit: val('xCredit'),
+      lines: [...document.querySelectorAll('#lines .line')].map(d=>({
+        name:d.dataset.name, hsn:d.dataset.hsn, unit:d.dataset.unit, gst:d.dataset.gst,
+        qty:d.querySelector('.q').value, rate:d.querySelector('.r').value }))
+    });
+  }, 400);
+}
+function restoreDraft(){
+  const d = load(K.draft, null);
+  if(!d || !Array.isArray(d.lines)) return false;
+  if(!((d.buyerName||'').trim() || d.lines.some(l=>l.name) || d.transport || d.labour || d.credit)) return false;
+  $('buyerName').value = d.buyerName||''; $('buyerMobile').value = d.buyerMobile||'';
+  $('buyerAddress').value = d.buyerAddress||''; $('buyerGSTIN').value = d.buyerGSTIN||'';
+  if(d.dateTouched && d.billDate && d.savedOn === todayISO()){ $('billDate').value = d.billDate; dateTouched = true; }
+  if(d.pos) $('placeOfSupply').value = d.pos;
+  $('xTransport').value = d.transport||''; $('xLabour').value = d.labour||''; $('xCredit').value = d.credit||'';
+  $('lines').innerHTML = '';
+  d.lines.filter(l => l.name).forEach(l => addLine({name:l.name, hsn:l.hsn, unit:l.unit, gst:l.gst, rate:l.rate}, l.qty));
+  return true;
+}
+function resetForm(){
+  ['buyerName','buyerMobile','buyerAddress','buyerGSTIN','xTransport','xLabour','xCredit'].forEach(id => $(id).value='');
+  $('placeOfSupply').value = CFG.homeState || STATES[0];
+  dateTouched = false; $('billDate').value = todayISO();
+  $('lines').innerHTML = '';
+  $('gstinWarnBox').classList.add('hidden');
+  recalc();
+  clearTimeout(draftTimer);
+  localStorage.removeItem(K.draft);
+  window.scrollTo(0,0);
+}
+
+/* =====================================================================
+   SYNC — one call does it all: the queue goes up and the fresh picture
+   comes back in the same reply.
+   ===================================================================== */
+function online(){ return navigator.onLine !== false; }
+function apiUrl(params){
+  const u = CFG.scriptUrl; if(!u) return '';
+  const q = Object.assign({}, params||{});
+  if(CFG.token) q.token = CFG.token;
+  const s = Object.keys(q).map(k => encodeURIComponent(k)+'='+encodeURIComponent(q[k])).join('&');
+  return u + (s ? (u.includes('?') ? '&' : '?') + s : '');
+}
+async function timedFetch(url, opt){
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 30000);
+  try{ const res = await fetch(url, Object.assign({redirect:'follow', signal:ctl.signal}, opt||{})); return await res.json(); }
+  finally{ clearTimeout(t); }
+}
+function apiGet(params){ return timedFetch(apiUrl(params)); }
+function apiPost(body){
+  const payload = Object.assign({}, body);
+  if(CFG.token) payload.token = CFG.token;
+  // text/plain on purpose: it avoids a CORS preflight that Apps Script cannot answer
+  return timedFetch(CFG.scriptUrl, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload)});
+}
+
+function pendingCount(){
+  return QUEUE.invoices.length + QUEUE.customers.length + QUEUE.payments.length + QUEUE.cancels.length +
+         (QUEUE.catalogDirty ? 1 : 0) + (QUEUE.configDirty ? 1 : 0);
+}
+function paintSyncPill(state, text){
+  $('syncPill').className = 'hbtn' + (state==='warn' ? ' warn' : '') + (state==='off' ? ' off' : '');
+  $('syncTxt').innerHTML = text;
+}
+function refreshSyncUI(){
+  const n = pendingCount();
+  if(!CFG.scriptUrl) paintSyncPill('off','Not set up');
+  else if(!online()) paintSyncPill('off', n ? n+' waiting' : 'Offline');
+  else if(n) paintSyncPill('warn', n + ' to sync');
+  else paintSyncPill('ok','Synced');
+  $('notLinked').classList.toggle('hidden', !!CFG.scriptUrl);
+  $('itemsSaveBtn').classList.toggle('hidden', !QUEUE.catalogDirty);
+}
+
+/* Only what the sheet needs goes up — nothing extra. */
+function wireInvoice(i){
+  return {cid:i.cid, billType:i.billType, invoiceNo:i.invoiceNo, date:i.date, time:i.time, buyerName:i.buyerName,
+          buyerMobile:i.buyerMobile, buyerAddress:i.buyerAddress, buyerGSTIN:i.buyerGSTIN, placeOfSupply:i.placeOfSupply,
+          items:i.items, taxableValue:i.taxableValue, cgst:i.cgst, sgst:i.sgst, igst:i.igst,
+          transport:i.transport, labour:i.labour, credit:i.credit, roundOff:i.roundOff, total:i.total};
+}
+function sharedConfig(){ const o = {}; SHARED_KEYS.forEach(k => { o[k] = CFG[k]; }); return o; }
+
+let syncing = false, syncQueued = false;
+async function sync(opts){
+  opts = opts || {};
+  const silent = !!opts.silent, pull = opts.pull !== false;
+  if(!CFG.scriptUrl){ if(!silent) toast('This phone is not connected yet.','err'); return false; }
+  if(!online()){ if(!silent) toast('No connection. Everything is saved on this phone and will go up automatically.'); refreshSyncUI(); return false; }
+  if(syncing){ syncQueued = true; return false; }
+  syncing = true;
+  paintSyncPill('warn','<span class="spin"></span>');
+  let ok = false;
+  try{
+    let boot = null;
+    if(pendingCount()){
+      const sent = {invoices:QUEUE.invoices.slice(), customers:QUEUE.customers.slice(), payments:QUEUE.payments.slice(), cancels:QUEUE.cancels.slice()};
+      const revs = {cat:QUEUE.catalogRev|0, cfg:QUEUE.configRev|0};
+      const body = {action:'syncBatch'};
+      if(sent.invoices.length)  body.invoices  = sent.invoices.map(wireInvoice);
+      if(sent.customers.length) body.customers = sent.customers;
+      if(sent.payments.length)  body.payments  = sent.payments;
+      if(sent.cancels.length)   body.cancels   = sent.cancels;
+      if(QUEUE.catalogDirty) body.items  = CATALOG;
+      if(QUEUE.configDirty)  body.config = sharedConfig();
+      if(pull){ body.pull = true; body.limit = 80; }
+      const r = await apiPost(body);
+      if(!r || !r.success) throw new Error((r && r.error) || 'The server refused the request');
+      settle(sent, r, revs);
+      boot = r.boot;
+    } else if(pull){
+      const d = await apiGet({action:'bootstrap', limit:80});
+      if(!d || !d.success) throw new Error((d && d.error) || 'The server refused the request');
+      boot = d;
+    }
+    if(boot && boot.success !== false) applyBoot(boot);
+    ok = true;
+    if(!silent && !pendingCount()) toast('Up to date.','ok');
+  }catch(err){
+    const m = String(err && err.message || err);
+    if(/Unauthorised/i.test(m)) toast('The access word is wrong. Ask your software provider to check Settings.','err');
+    else if(!silent) toast('Could not sync. Nothing is lost — it will go up when the connection is back.','err');
+  }finally{
+    syncing = false;
+    refreshSyncUI(); paintNextNo();
+    if(currentTab==='history') renderHistory();
+    if(currentTab==='items') renderItems();
+    if(currentTab==='customers') renderCustomers();
+    if(syncQueued){ syncQueued = false; if(pendingCount()) setTimeout(() => sync({silent:true, pull:false}), 60); }
+  }
+  return ok;
+}
+function syncNow(){ return sync({}); }
+
+/* Take out of the queue only what the server confirmed, item by item. */
+function settle(sent, r, revs){
+  const renumbered = [], lost = [];
+  (r.results||[]).forEach((res, idx) => {
+    const q = sent.invoices[idx];
+    if(!q || !res || !res.success) return;
+    const local = INVOICES.find(i => i.cid === q.cid);
+    if(local){
+      if(res.invoiceNo && res.invoiceNo !== local.invoiceNo){
+        if(!local.fresh){ local.renumberedFrom = local.renumberedFrom || local.invoiceNo; renumbered.push(local.renumberedFrom + ' → ' + res.invoiceNo); }
+        local.invoiceNo = res.invoiceNo;
+        PAYMENTS.forEach(p => { if(p.billCid && p.billCid === local.cid) p.invoiceNo = res.invoiceNo; });
+      }
+      local.pending = false;
+    }
+    QUEUE.invoices = QUEUE.invoices.filter(i => i !== q);
+  });
+  (r.customers||[]).forEach((res, idx) => { const q = sent.customers[idx]; if(q && res && res.success) QUEUE.customers = QUEUE.customers.filter(c => c !== q); });
+  const gone = res => res && !res.success && /not found/i.test(String(res.error||''));
+  (r.payments||[]).forEach((res, idx) => {
+    const q = sent.payments[idx]; if(!q || !res) return;
+    if(res.success || gone(res)){
+      QUEUE.payments = QUEUE.payments.filter(p => p !== q);
+      const lp = PAYMENTS.find(p => p.pid && p.pid === q.pid);
+      if(lp) lp.pending = false;
+      if(!res.success) lost.push('payment on ' + (q.invoiceNo||'a bill'));
+    }
+  });
+  (r.cancels||[]).forEach((res, idx) => {
+    const q = sent.cancels[idx]; if(!q || !res) return;
+    if(res.success || gone(res)) QUEUE.cancels = QUEUE.cancels.filter(c => c !== q);
+  });
+  if(r.itemsSaved && (QUEUE.catalogRev|0) === revs.cat) QUEUE.catalogDirty = false;
+  if(r.configSaved && (QUEUE.configRev|0) === revs.cfg) QUEUE.configDirty = false;
+  if(r.nextInvoiceNo){ NEXTNO = r.nextInvoiceNo; save(K.next, NEXTNO); }
+  if(r.nextCashNo){ NEXTCASH = r.nextCashNo; save(K.nextCash, NEXTCASH); }
+  save(K.q, QUEUE); save(K.inv, INVOICES); save(K.pay, PAYMENTS);
+  // Shown even on a background sync: a PDF with the old number may already have been shared.
+  if(renumbered.length) setTimeout(() => toast('Bill number changed: ' + esc(renumbered.join(', ')) + '. Share the PDF again from History.','err'), 300);
+  else if(lost.length) setTimeout(() => toast('Could not save ' + esc(lost.join(', ')) + ' — that bill no longer exists in the sheet.','err'), 300);
+}
+
+function applyBoot(d){
+  if(d.config && Object.keys(d.config).length && !QUEUE.configDirty){
+    SHARED_KEYS.forEach(k => {
+      if(d.config[k] === undefined) return;
+      let v = d.config[k];
+      if(k.indexOf('f_') === 0) v = !(v === false || String(v).toUpperCase() === 'FALSE');
+      CFG[k] = v;
+    });
+    save(K.cfg, CFG); applyConfigUI();
+  }
+  if(Array.isArray(d.items) && !QUEUE.catalogDirty){ CATALOG = d.items; save(K.cat, CATALOG); }
+  if(Array.isArray(d.customers)){
+    const waiting = QUEUE.customers.filter(q => !d.customers.some(c => q.mobile && String(c.mobile) === String(q.mobile)));
+    CUSTOMERS = d.customers.concat(waiting.map(q => ({name:q.name, mobile:q.mobile, address:q.address, gstin:q.gstin})));
+    save(K.cust, CUSTOMERS);
+  }
+  applyRemoteBills(d);
+  if(d.invoiceNo){ NEXTNO = d.invoiceNo; save(K.next, NEXTNO); }
+  if(d.cashNo){ NEXTCASH = d.cashNo; save(K.nextCash, NEXTCASH); }
+  save(K.sync, Date.now());
+}
+
+/* Bills from the sheet = the newest ones + every older bill that is still unpaid.
+   A bill this phone still shows as unpaid but the sheet no longer lists was
+   settled (or cancelled) from another phone, so its due is cleared here too. */
+function applyRemoteBills(d){
+  const remote = (d.invoices || []).concat(d.dues || []);
+  if(Array.isArray(d.dues)){
+    const seen = {}, hold = {};
+    remote.forEach(r => { seen[keyOf(normInv(r))] = 1; });
+    QUEUE.payments.forEach(p => { if(p.billCid) hold[p.billCid] = 1; });
+    INVOICES.forEach(i => { if((Number(i.credit)||0) > 0 && !i.pending && !seen[keyOf(i)] && !hold[keyOf(i)]) i.credit = 0; });
+  }
+  mergeInvoices(remote);
+  mergePayments(d.payments || []);
+}
+function keyOf(i){ return i.cid || ((isCash(i.billType) ? 'N' : 'G') + i.invoiceNo); }
+function mergeInvoices(remote){
+  const byKey = {};
+  INVOICES.forEach(i => { byKey[keyOf(i)] = i; });
+  // a payment or cancel still waiting to go up must not be undone by an older copy from the sheet
+  const hold = {};
+  QUEUE.payments.forEach(p => { if(p.billCid) hold[p.billCid] = 1; });
+  QUEUE.cancels.forEach(c => { if(c.cid) hold[c.cid] = 1; });
+  remote.forEach(raw => {
+    const r = normInv(raw), key = keyOf(r), ex = byKey[key];
+    if(ex && ex.pending) return;
+    const rec = Object.assign({}, ex || {}, r, {pending:false});
+    if(ex && hold[key]){ rec.credit = ex.credit; rec.status = ex.status; rec.cancelReason = ex.cancelReason; }
+    if(!rec.items || !rec.items.length) rec.items = (ex && ex.items) || [];
+    byKey[key] = rec;
+  });
+  const seq = v => { const m = String(v && v.invoiceNo || '').match(/(\d+)/); return m ? parseInt(m[1],10) : 0; };
+  INVOICES = Object.values(byKey).sort((a,b) => tsOf(b) - tsOf(a) || seq(b) - seq(a));
+  if(INVOICES.length > 500){
+    const keep = INVOICES.slice(0,500), rest = INVOICES.slice(500).filter(i => i.pending || (Number(i.credit)||0) > 0);
+    INVOICES = keep.concat(rest);
+  }
+  save(K.inv, INVOICES);
+}
+function mergePayments(remote){
+  const byPid = {};
+  PAYMENTS.forEach(p => { byPid[p.pid || uid('x')] = p; });
+  remote.forEach(p => { if(p.pid) byPid[p.pid] = Object.assign({}, byPid[p.pid] || {}, p, {pending:false}); });
+  PAYMENTS = Object.values(byPid).sort((a,b) => tsOf(b) - tsOf(a));
+  if(PAYMENTS.length > 800) PAYMENTS = PAYMENTS.filter((p,i) => i < 800 || p.pending);
+  save(K.pay, PAYMENTS);
+}
+
+/* Rows pulled from the sheet carry no timestamp — rebuild one from the printed
+   date and time, so GST and non-GST bills interleave correctly. */
+function tsOf(i){
+  if(i.ts) return i.ts;
+  const d = String(i.date||'').match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if(!d) return 0;
+  let h = 0, mi = 0;
+  const t = String(i.time||'').match(/(\d{1,2}):(\d{2})\s*([AaPp])?/);
+  if(t){ h = parseInt(t[1],10); mi = parseInt(t[2],10); if(t[3]){ h = h % 12; if(/p/i.test(t[3])) h += 12; } }
+  return new Date(+d[3], +d[2]-1, +d[1], h, mi).getTime();
+}
+
+function bumpNo(no, by){
+  const m = String(no||'').match(/^(.*?)(\d+)$/);
+  return m ? m[1] + String(parseInt(m[2],10) + by).padStart(m[2].length,'0') : no;
+}
+function predictedNo(cash){
+  const base = cash ? NEXTCASH : NEXTNO;
+  const pend = QUEUE.invoices.filter(i => isCash(i.billType) === !!cash).length;
+  if(!base){
+    const n = INVOICES.filter(i => isCash(i.billType) === !!cash).length + 1;
+    return cash ? String(n).padStart(4,'0') : String(CFG.gstPrefix||'INV').toUpperCase() + String(n).padStart(5,'0');
+  }
+  return bumpNo(base, pend);
+}
+function paintNextNo(){
+  const bits = [];
+  if(F('f_gst'))  bits.push((F('f_cash') ? 'GST ' : 'Next ') + predictedNo(false));
+  if(F('f_cash')) bits.push((F('f_gst') ? 'Non-GST ' : 'Next ') + predictedNo(true));
+  $('nextNoLbl').textContent = bits.join(' · ');
+}
+
+/* =====================================================================
+   SAVE A BILL
+   ===================================================================== */
+function chooseBillType(){
+  freshenDate();
+  const name = val('buyerName').trim();
+  const rows = collectLines();
+  if(!name){ toast('Enter the buyer name.','err'); $('buyerName').focus(); return; }
+  if(!rows.length){ toast('Add at least one item with a quantity.','err'); return; }
+  const g = val('buyerGSTIN').trim();
+  if(g && F('f_gst')){ const prob = gstinProblem(g); if(prob && !confirm(prob + '\n\nSave the bill anyway?')) return; }
+  const both = F('f_gst') && F('f_cash');
+  if(!both){ generateBill(F('f_gst') ? T_GST : T_CASH); return; }
+  const tg = computeTotals(rows, isIntrastate(), false, extras());
+  openSheet('Which bill?',
+    '<p class="hint">Total ₹ ' + inr0(tg.total) + ' · ' + rows.length + (rows.length===1 ? ' item' : ' items') + '</p>' +
+    '<button class="opt" onclick="generateBill(\'' + T_GST + '\')"><b>GST bill</b><span class="m">Tax invoice with HSN and GST · no. ' + esc(predictedNo(false)) + '</span></button>' +
+    '<button class="opt" onclick="generateBill(\'' + T_CASH + '\')"><b>Non-GST bill</b><span class="m">Plain bill, no tax shown · no. ' + esc(predictedNo(true)) + '</span></button>');
+}
+
+let saving = false;
+async function generateBill(billType){
+  if(saving) return;                       // a double tap must never make two bills
+  const cash = isCash(billType);
+  const name = val('buyerName').trim();
+  const rows = collectLines();
+  if(!name || !rows.length) return;
+  saving = true;
+  $('genBtn').disabled = true;
+  openSheet('Saving', '<p class="empty"><span class="spin" style="border-color:rgba(27,54,93,.25);border-top-color:#1B365D;"></span><br>Saving the bill…</p>');
+  try{
+    const t = computeTotals(rows, isIntrastate(), cash, extras());
+    const rec = {
+      cid: uid('c'), billType: cash ? T_CASH : T_GST, invoiceNo: predictedNo(cash),
+      date: isoToDMY(val('billDate')) || todayDMY(), time: nowTime(),
+      buyerName: name, buyerMobile: val('buyerMobile').trim(), buyerAddress: val('buyerAddress').trim(),
+      buyerGSTIN: cash && !F('f_gst') ? '' : val('buyerGSTIN').trim().toUpperCase(),
+      placeOfSupply: val('placeOfSupply') || CFG.homeState,
+      items: rows, taxableValue: t.taxable, cgst: t.cgst, sgst: t.sgst, igst: t.igst,
+      transport: t.transport, labour: t.labour, credit: Math.min(creditAmt(), t.total),
+      roundOff: t.roundOff, total: t.total, ts: Date.now(), pending: true, fresh: true, status: 'ACTIVE'
+    };
+
+    // 1. the phone first — from here on the sale cannot be lost
+    INVOICES.unshift(rec); save(K.inv, INVOICES);
+    QUEUE.invoices.push(wireInvoice(rec));      // a copy: a later payment or cancel must not alter what goes up as the bill
+    if(rec.buyerMobile && !CUSTOMERS.some(c => String(c.mobile) === rec.buyerMobile)){
+      const c = {name:rec.buyerName, mobile:rec.buyerMobile, address:rec.buyerAddress, gstin:rec.buyerGSTIN};
+      CUSTOMERS.push(c); save(K.cust, CUSTOMERS); QUEUE.customers.push(Object.assign({}, c));
+    }
+    save(K.q, QUEUE);
+    resetForm();
+
+    // 2. then the sheet — bill, new party and anything else waiting, in ONE call.
+    //    On a weak signal we stop waiting after 8 s; the upload carries on behind.
+    if(CFG.scriptUrl && online()){
+      await Promise.race([sync({silent:true, pull:false}), new Promise(res => setTimeout(res, 8000))]);
+    }
+    rec.fresh = false; save(K.inv, INVOICES);
+    refreshSyncUI(); paintNextNo();
+    showSaved(rec);
+  }catch(err){
+    toast('Something went wrong: ' + esc(err.message||err) + '. Check History before making the bill again.','err');
+    closeSheet();
+  }finally{
+    saving = false;
+    $('genBtn').disabled = false;
+  }
+}
+function showSaved(rec){
+  rec = INVOICES.find(i => i.cid === rec.cid) || rec;
+  openSheet('Bill saved',
+    '<div style="text-align:center;padding:6px 0 14px;">' +
+      '<div style="font-size:.8rem;color:var(--muted);letter-spacing:.7px;">' + (isCash(rec.billType) ? 'NON-GST BILL' : 'GST BILL') + '</div>' +
+      '<div style="font-size:1.7rem;font-weight:700;color:var(--navy);margin-top:2px;">' + esc(rec.invoiceNo) + '</div>' +
+      '<div style="margin-top:2px;">' + esc(rec.buyerName) + ' · ₹ ' + inr0(rec.total) + '</div>' +
+      (rec.pending ? '<p class="hint" style="margin:10px 0 0;">Saved on this phone. It will go up automatically when the network is back.</p>' : '') +
+    '</div>' +
+    '<button class="btn primary block" data-key="' + esc(keyOf(rec)) + '" onclick="reprint(this.dataset.key,true)">Share PDF</button>' +
+    '<div class="btn-row fill" style="margin-top:9px;">' +
+      '<button class="btn" data-key="' + esc(keyOf(rec)) + '" onclick="reprint(this.dataset.key,false)">Download PDF</button>' +
+      '<button class="btn" onclick="closeSheet()">New bill</button></div>');
+}
+
+/* =====================================================================
+   PDF — drawn as real vector text on A4, so it is crisp, small and it
+   paginates properly. (Standard PDF fonts have no ₹ sign, so "Rs.")
+   ===================================================================== */
+const PW=210, PH=297, ML=10, MR=10, MT=10, MB=12;
+const CW = PW-ML-MR;
+const COLS = [8, 71, 16, 14, 12, 24, 15, 30];
+const RS = [];
+(function(){ let x=ML; COLS.forEach(w=>{ RS.push(x); x+=w; }); RS.push(x); })();
+const rs = inr;
+
+async function ensureJsPDF(){
+  for(let i=0;i<40 && !(window.jspdf && window.jspdf.jsPDF);i++) await new Promise(r=>setTimeout(r,100));
+  if(!(window.jspdf && window.jspdf.jsPDF)) throw new Error('the PDF engine is not loaded yet — open the app once with internet');
+  return window.jspdf.jsPDF;
+}
+function pdfName(rec){
+  return (isCash(rec.billType) ? 'Bill ' : '') + rec.invoiceNo + ' ' + String(rec.buyerName||'').replace(/[^\w\s-]/g,'').slice(0,24).trim() + '.pdf';
+}
+async function outputPdf(doc, rec, share){
+  const fname = pdfName(rec);
+  if(share && navigator.canShare){
+    const file = new File([doc.output('blob')], fname, {type:'application/pdf'});
+    if(navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title: rec.invoiceNo}); return; }catch(e){ if(e.name==='AbortError') return; }
+    }
+  }
+  doc.save(fname);
+}
+function stampCancelled(doc){
+  const pages = doc.internal.getNumberOfPages ? doc.internal.getNumberOfPages() : 1;
+  for(let p=1;p<=pages;p++){
+    doc.setPage(p);
+    try{ doc.saveGraphicsState(); doc.setGState(new doc.GState({opacity:0.22})); }catch(e){}
+    doc.setFont('helvetica','bold'); doc.setFontSize(72); doc.setTextColor(185,28,28);
+    doc.text('CANCELLED', 105, 165, {align:'center', angle:35});
+    try{ doc.restoreGraphicsState(); }catch(e){}
+  }
+}
+
+async function makePDF(rec, opts){
+  const JsPDF = await ensureJsPDF();
+  const doc = new JsPDF({unit:'mm', format:'a4', orientation:'portrait', compress:true});
+  const intra = isIntrastate(rec.placeOfSupply);
+  const norm = (rec.items||[]).map(r => {
+    const gst = Number(r.gst)||0;
+    const amount = r.amount !== undefined ? Number(r.amount) : r2((Number(r.qty)||0) * (Number(r.rate)||0));
+    const taxable = r.taxable !== undefined ? Number(r.taxable) : r2(gst>0 ? amount/(1+gst/100) : amount);
+    return Object.assign({}, r, {gst, amount, taxable});
+  });
+  const t = computeTotals(norm, intra, false, {transport: rec.transport, labour: rec.labour});
+  const credit = Math.min(Math.max(0, Number(rec.credit)||0), t.total);
+
+  const INK=[28,25,23], NAVY=[27,54,93], GREY=[107,100,92], LINE=[200,194,185], SHADE=[244,242,238];
+  let y = MT, page = 1;
+  function setInk(c){ doc.setTextColor(c[0],c[1],c[2]); }
+  function line(x1,y1,x2,y2,c){ c=c||LINE; doc.setDrawColor(c[0],c[1],c[2]); doc.setLineWidth(0.2); doc.line(x1,y1,x2,y2); }
+  function box(x,yy,w,h){ doc.setDrawColor(LINE[0],LINE[1],LINE[2]); doc.setLineWidth(0.25); doc.rect(x,yy,w,h,'S'); }
+
+  function drawHeader(){
+    doc.setFillColor(NAVY[0],NAVY[1],NAVY[2]); doc.rect(ML, y, CW, 8.4, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(255,255,255);
+    doc.text(CFG.gstin ? 'TAX INVOICE' : 'INVOICE', PW/2, y+5.8, {align:'center'});
+    doc.setFontSize(8.4); doc.setFont('helvetica','normal');
+    doc.text('Original for recipient', PW-MR-2, y+5.8, {align:'right'});
+    y += 8.4;
+    const hTop = y, rightW = 62, leftW = CW - rightW;
+    doc.setFont('helvetica','bold'); doc.setFontSize(18); setInk(NAVY);
+    let sy = y+8.6;
+    doc.splitTextToSize(String(CFG.shopName||''), leftW-7).forEach(l => { doc.text(l, ML+3.5, sy); sy += 7; });
+    sy -= 1;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.8); setInk(GREY);
+    String(CFG.shopSub||'').split('\n').forEach(l => { doc.splitTextToSize(l, leftW-7).forEach(w => { doc.text(w, ML+3.5, sy); sy+=4.2; }); });
+    if(CFG.gstin){ doc.setFont('helvetica','bold'); doc.setFontSize(9.4); setInk(INK); doc.text('GSTIN  ' + CFG.gstin, ML+3.5, sy+1); sy+=5; }
+    const meta = [['Invoice no.', rec.invoiceNo], ['Date', rec.date], ['Time', rec.time||''], ['Place of supply', rec.placeOfSupply||''], ['Reverse charge', 'No']];
+    let my = hTop+6.4;
+    meta.forEach(m => {
+      doc.setFont('helvetica','normal'); setInk(GREY); doc.setFontSize(8.4); doc.text(m[0], ML+leftW+3.5, my);
+      doc.setFont('helvetica','bold'); setInk(INK); doc.setFontSize(9.4); doc.text(String(m[1]||'-'), PW-MR-3.5, my, {align:'right'});
+      my += 6.3;
+    });
+    const hBottom = Math.max(sy+3, my+1.5);
+    box(ML, hTop, leftW, hBottom-hTop); box(ML+leftW, hTop, rightW, hBottom-hTop);
+    y = hBottom;
+    const bTop = y;
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); setInk(NAVY); doc.text('BILL TO', ML+3.5, y+5.4);
+    doc.setFontSize(12.5); setInk(INK); doc.text(String(rec.buyerName||'-'), ML+3.5, y+12);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.2); setInk(GREY);
+    const parts = [];
+    if(rec.buyerAddress) parts.push(String(rec.buyerAddress));
+    if(rec.buyerMobile) parts.push('Mob ' + rec.buyerMobile);
+    if(rec.buyerGSTIN) parts.push('GSTIN ' + rec.buyerGSTIN);
+    let by = y+17.4;
+    doc.splitTextToSize(parts.join('    '), CW-9).forEach(l => { doc.text(l, ML+3.5, by); by+=4.4; });
+    const bBottom = Math.max(by+1, bTop+20);
+    box(ML, bTop, CW, bBottom-bTop);
+    y = bBottom + 3.5;
+  }
+  const HEADS = ['#','Description','HSN','Qty','Unit','Rate','GST%','Amount'];
+  const ALIGN = ['center','left','center','right','center','right','right','right'];
+  const cx = i => ALIGN[i]==='right' ? RS[i]+COLS[i]-2.2 : ALIGN[i]==='center' ? RS[i]+COLS[i]/2 : RS[i]+2.2;
+  function drawTableHead(){
+    doc.setFillColor(SHADE[0],SHADE[1],SHADE[2]); doc.rect(ML, y, CW, 8.6, 'F');
+    box(ML, y, CW, 8.6);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.4); setInk(GREY);
+    HEADS.forEach((h,i) => doc.text(h, cx(i), y+5.8, {align: ALIGN[i]}));
+    for(let i=1;i<COLS.length;i++) line(RS[i], y, RS[i], y+8.6);
+    y += 8.6;
+  }
+  function footer(){
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.6); setInk(GREY);
+    doc.text('Computer generated invoice', ML, PH-6);
+    doc.text('Page ' + page, PW-MR, PH-6, {align:'right'});
+  }
+  function newPage(){
+    footer(); doc.addPage(); page++; y = MT;
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); setInk(GREY);
+    doc.text(String(CFG.shopName||'') + '  -  Invoice ' + rec.invoiceNo + ' (continued)', ML, y+3.5);
+    y += 7;
+  }
+  const LIMIT = PH - MB - 8;
+  function pageBreak(n){ if(y + n > LIMIT){ newPage(); drawTableHead(); } }
+  function blockBreak(n){ if(y + n > LIMIT) newPage(); }
+
+  drawHeader(); drawTableHead();
+  norm.forEach((r,i) => {
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.4);
+    const nameLines = doc.splitTextToSize(String(r.name||''), COLS[1]-4.5);
+    const h = Math.max(8.8, nameLines.length*4.4 + 4.2);
+    pageBreak(h);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.4); setInk(INK);
+    const cells = [String(i+1), null, String(r.hsn||'-'), String(r.qty), String(r.unit||''), rs(r.rate), String(r.gst)+'%', rs(r.amount)];
+    cells.forEach((c,ci) => { if(ci!==1) doc.text(c, cx(ci), y+6, {align: ALIGN[ci]}); });
+    nameLines.forEach((l,li) => doc.text(l, RS[1]+2.2, y+6+li*4.4));
+    box(ML, y, CW, h);
+    for(let c=1;c<COLS.length;c++) line(RS[c], y, RS[c], y+h);
+    y += h;
+  });
+  /* stretch the table to a fixed line so a two-item bill still fills the page */
+  const TABLE_FLOOR = 164;
+  if(page === 1 && y < TABLE_FLOOR){
+    box(ML, y, CW, TABLE_FLOOR-y);
+    for(let c=1;c<COLS.length;c++) line(RS[c], y, RS[c], TABLE_FLOOR);
+    y = TABLE_FLOOR;
+  }
+
+  const totalRows = [['Taxable value', rs(t.taxable)]];
+  if(intra){ totalRows.push(['CGST', rs(t.cgst)], ['SGST', rs(t.sgst)]); } else totalRows.push(['IGST', rs(t.igst)]);
+  if(t.transport) totalRows.push([String(CFG.charge1||'Charges'), rs(t.transport)]);
+  if(t.labour)    totalRows.push([String(CFG.charge2||'Charges'), rs(t.labour)]);
+  if(Math.abs(t.roundOff) >= 0.01) totalRows.push(['Round off', rs(t.roundOff)]);
+  blockBreak(totalRows.length*6.4 + 15 + 34);
+
+  const tw = 84, tx = PW-MR-tw, blockTop = y + 3.5;
+  let ty = blockTop;
+  doc.setFontSize(9.6);
+  totalRows.forEach(r => {
+    doc.setFont('helvetica','normal'); setInk(GREY); doc.text(r[0], tx+3.5, ty+5.4);
+    setInk(INK); doc.text('Rs. ' + r[1], PW-MR-3.5, ty+5.4, {align:'right'});
+    ty += 6.4;
+  });
+  doc.setFillColor(SHADE[0],SHADE[1],SHADE[2]); doc.rect(tx, ty+0.8, tw, 12, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(13.5); setInk(NAVY);
+  doc.text('TOTAL', tx+3.5, ty+9);
+  doc.text('Rs. ' + rs(t.total), PW-MR-3.5, ty+9, {align:'right'});
+  const blockBottom = ty + 12.8;
+  box(tx, blockTop, tw, blockBottom-blockTop);
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); setInk(NAVY); doc.text('AMOUNT IN WORDS', ML+1.5, blockTop+5);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); setInk(INK);
+  let wy = blockTop+11;
+  doc.splitTextToSize('Rupees ' + inWords(t.total) + ' Only', CW-tw-8).forEach(l => { doc.text(l, ML+1.5, wy); wy+=4.8; });
+  if(CFG.bank){
+    doc.setFontSize(8.6); setInk(GREY);
+    doc.splitTextToSize('Bank: ' + CFG.bank, CW-tw-8).forEach(l => { doc.text(l, ML+1.5, wy+1.6); wy+=4; });
+  }
+  if(credit > 0){
+    wy += 3;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.4); setInk(GREY); doc.text('Received', ML+1.5, wy+4);
+    setInk(INK); doc.text('Rs. ' + rs(t.total - credit), ML+38, wy+4);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(185,28,28);
+    doc.text('Balance due', ML+1.5, wy+10.4); doc.text('Rs. ' + rs(credit), ML+38, wy+10.4);
+    wy += 12;
+  }
+  y = Math.max(blockBottom, wy) + 5.5;
+
+  const rates = Object.keys(t.byRate).sort((a,b)=>a-b);
+  if(rates.length){
+    blockBreak(11 + rates.length*6.8);
+    const heads = intra ? ['GST rate','Taxable','CGST','SGST','Total tax'] : ['GST rate','Taxable','IGST','Total tax'];
+    const cw2 = [30, 45, 38, 38, 39].slice(0, heads.length);
+    const scale = CW / cw2.reduce((a,b)=>a+b,0);
+    const w2 = cw2.map(w => w*scale); const x2 = []; let xx = ML; w2.forEach(w => { x2.push(xx); xx += w; });
+    doc.setFillColor(SHADE[0],SHADE[1],SHADE[2]); doc.rect(ML, y, CW, 7.2, 'F'); box(ML, y, CW, 7.2);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.2); setInk(GREY);
+    heads.forEach((h,i) => doc.text(h, i===0 ? x2[i]+2.5 : x2[i]+w2[i]-2.5, y+4.9, {align: i===0?'left':'right'}));
+    y += 7.2;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); setInk(INK);
+    rates.forEach(rt => {
+      const d = t.byRate[rt], tax = intra ? d.cgst+d.sgst : d.igst;
+      const cells = intra ? [rt+'%', rs(d.taxable), rs(d.cgst), rs(d.sgst), rs(tax)] : [rt+'%', rs(d.taxable), rs(d.igst), rs(tax)];
+      cells.forEach((c,i) => doc.text(c, i===0 ? x2[i]+2.5 : x2[i]+w2[i]-2.5, y+4.7, {align: i===0?'left':'right'}));
+      box(ML, y, CW, 6.6);
+      for(let i=1;i<x2.length;i++) line(x2[i], y, x2[i], y+6.6);
+      y += 6.6;
+    });
+  }
+
+  /* terms + signature; if the page is nearly full, the signature alone */
+  const roomLeft = LIMIT - y;
+  const showTerms = roomLeft >= 40 && String(CFG.terms||'').trim();
+  let pinBottom = false;
+  if(roomLeft < 15){ if(roomLeft >= 5) pinBottom = true; else blockBreak(40); }
+  y += 4.5;
+  const sigW = 64; let tyy = y+5;
+  if(showTerms){
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); setInk(NAVY); doc.text('TERMS', ML+1.5, y);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.4); setInk(GREY);
+    String(CFG.terms||'').split('\n').forEach(l => { doc.splitTextToSize(l, CW-sigW-9).forEach(w => { if(tyy < LIMIT) { doc.text(w, ML+1.5, tyy); tyy+=4; } }); });
+  }
+  const sigY = Math.min(PH-MB-13, showTerms ? Math.max(y+22, tyy+9) : (pinBottom ? Math.max(y+5, PH-MB-13) : y+14));
+  line(PW-MR-sigW, sigY, PW-MR, sigY, INK);
+  doc.setFontSize(9); setInk(INK); doc.setFont('helvetica','bold');
+  doc.text('For ' + String(CFG.shopName||''), PW-MR-sigW/2, sigY+5, {align:'center', maxWidth:sigW+20});
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.4); setInk(GREY);
+  doc.text('Authorised signatory', PW-MR-sigW/2, sigY+9.2, {align:'center'});
+  footer();
+  if(rec.status === 'CANCELLED') stampCancelled(doc);
+  await outputPdf(doc, rec, opts && opts.share);
+}
+
+/* Non-GST bill — a plain memo, no tax anywhere on the page. */
+function num0(n){
+  n = Number(n)||0;
+  return n % 1 === 0 ? n.toLocaleString('en-IN') : n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+async function makeCashPDF(rec, opts){
+  const JsPDF = await ensureJsPDF();
+  const doc = new JsPDF({unit:'mm', format:'a4', orientation:'portrait', compress:true});
+  const rows = (rec.items||[]).map(r => {
+    const qty = Number(r.qty)||0, rate = Number(r.rate)||0;
+    return {name:r.name, qty, rate, amount: r.amount!==undefined ? Number(r.amount) : r2(qty*rate)};
+  });
+  const transport = r2(rec.transport), labour = r2(rec.labour);
+  const total = Math.round(rows.reduce((a,r) => a + r.amount, 0) + transport + labour);
+  const credit = Math.min(Math.max(0, Number(rec.credit)||0), total);
+
+  const L=12, R=12, W=210-L-R;
+  const CO = [20, 76, 24, 30, 36];
+  const X = []; (function(){ let x=L; CO.forEach(w=>{ X.push(x); x+=w; }); X.push(x); })();
+  const FLOOR = 238;
+  let y = 10, page = 1;
+  function hr(yy, thick){ doc.setDrawColor(0,0,0); doc.setLineWidth(thick?0.7:0.25); doc.line(L, yy, 210-R, yy); }
+  function footer(){
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.6); doc.setTextColor(110,110,110);
+    doc.text('Page ' + page, 210-R, 292, {align:'right'}); doc.setTextColor(0,0,0);
+  }
+  doc.setTextColor(0,0,0);
+  doc.setFont('times','bold');
+  let fs = 30; doc.setFontSize(fs);
+  const nm = String(CFG.shopName||'').toUpperCase();
+  while(fs > 16 && doc.getTextWidth(nm) > W){ fs -= 1; doc.setFontSize(fs); }
+  doc.text(nm, 105, y+13, {align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(11);
+  let hy = y+21;
+  String(CFG.shopSub||'').split('\n').forEach(l => { doc.splitTextToSize(l, W-20).forEach(w => { doc.text(w, 105, hy, {align:'center'}); hy += 6.4; }); });
+  y = hy + 2.5; hr(y, true);
+
+  y += 8; doc.setFontSize(11);
+  [['Party name', rec.buyerName || ''], ['Address', rec.buyerAddress || ''], ['Mob no.', rec.buyerMobile || ''],
+   ['Bill no.', rec.invoiceNo || ''], ['Date', rec.date || '']].forEach(m => {
+    doc.setFont('helvetica','normal'); doc.text(m[0], L+1, y);
+    const lines = doc.splitTextToSize(String(m[1]) || ' ', W-46);
+    lines.forEach((l,i) => doc.text(l, L+42, y + i*5.6));
+    y += 7.4 + (lines.length-1)*5.6;
+  });
+  y += 1; hr(y, true);
+
+  const HEADS = ['S. No.','Description','Qty.','Rate','Amount'];
+  const ALIGN = ['center','left','right','right','right'];
+  let tableTop = 0;
+  const colX = i => ALIGN[i]==='right' ? X[i]+CO[i]-2.5 : ALIGN[i]==='center' ? X[i]+CO[i]/2 : X[i]+2.5;
+  function drawHead(){
+    y += 4; tableTop = y;
+    doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    HEADS.forEach((h,i) => doc.text(h, colX(i), y+6.4, {align: ALIGN[i]}));
+    y += 9.4; hr(y, false);
+    doc.setFont('helvetica','normal'); doc.setFontSize(11);
+  }
+  function closeTable(endY){
+    doc.setDrawColor(0,0,0); doc.setLineWidth(0.25);
+    for(let i=1;i<CO.length;i++) doc.line(X[i], tableTop, X[i], endY);
+    hr(tableTop, true); hr(endY, true);
+  }
+  function breakPage(endY){
+    closeTable(endY); footer(); doc.addPage(); page++; y = 12;
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text(String(CFG.shopName||'') + '  -  Bill ' + rec.invoiceNo + ' (continued)', L, y);
+    y += 3; drawHead();
+  }
+  drawHead();
+  rows.forEach((r,i) => {
+    const nameLines = doc.splitTextToSize(String(r.name||''), CO[1]-5);
+    const h = Math.max(8.6, nameLines.length*5.4 + 3.2);
+    if(y + h > FLOOR) breakPage(y);
+    doc.text(String(i+1) + '.', colX(0), y+6, {align:'center'});
+    nameLines.forEach((l,li) => doc.text(l, X[1]+2.5, y+6+li*5.4));
+    doc.text(num0(r.qty), colX(2), y+6, {align:'right'});
+    doc.text(num0(r.rate), colX(3), y+6, {align:'right'});
+    doc.text(num0(r.amount), colX(4), y+6, {align:'right'});
+    y += h;
+  });
+  [[String(CFG.charge1||'Charges'), transport], [String(CFG.charge2||'Charges'), labour]].forEach(x => {
+    if(!x[1]) return;
+    if(y + 8.6 > FLOOR) breakPage(y);
+    doc.text(x[0], X[1]+2.5, y+6); doc.text(num0(x[1]), colX(4), y+6, {align:'right'});
+    y += 8.6;
+  });
+  if(y + 8.6 <= FLOOR) y += Math.floor((FLOOR - y) / 8.6) * 8.6;      // empty space down to the floor, like a bill book
+  closeTable(y);
+
+  y += 9;
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('TOTAL -', X[4]-3, y, {align:'right'});
+  doc.setFontSize(17); doc.text(num0(total), 210-R, y, {align:'right'});
+  if(credit > 0){
+    y += 8; doc.setFont('helvetica','normal'); doc.setFontSize(11);
+    doc.text('Received', X[4]-3, y, {align:'right'}); doc.text(num0(total - credit), 210-R, y, {align:'right'});
+    y += 7; doc.setFont('helvetica','bold');
+    doc.text('Balance due', X[4]-3, y, {align:'right'}); doc.text(num0(credit), 210-R, y, {align:'right'});
+  }
+  y += 10;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10.5);
+  doc.splitTextToSize('Rupees ' + inWords(total) + ' Only', W).forEach(l => { doc.text(l, L+1, y); y += 5.4; });
+  footer();
+  if(rec.status === 'CANCELLED') stampCancelled(doc);
+  await outputPdf(doc, rec, opts && opts.share);
+}
+
+/* =====================================================================
+   HISTORY · DAILY SUMMARY · PAYMENTS · CANCEL
+   ===================================================================== */
+function findInv(key){ return INVOICES.find(i => keyOf(i) === key); }
+function paymentsFor(i){
+  return PAYMENTS.filter(p => p.billCid ? p.billCid === i.cid
+    : (String(p.invoiceNo) === String(i.invoiceNo) && isCash(p.billType) === isCash(i.billType)));
+}
+function renderSummary(){
+  const box = $('summaryBox');
+  if(!F('f_summary')){ box.innerHTML = ''; return; }
+  const today = todayDMY(), creditOn = F('f_credit');
+  const paidOn = {}, dead = {};
+  PAYMENTS.forEach(p => { const k = p.billCid || ((isCash(p.billType)?'N':'G') + p.invoiceNo); paidOn[k] = (paidOn[k]||0) + (Number(p.amount)||0); });
+  let sales=0, n=0, given=0, recv=0, out=0, outN=0;
+  INVOICES.forEach(i => {
+    if(i.status === 'CANCELLED'){ dead[keyOf(i)] = 1; return; }
+    const cr = Math.max(0, Number(i.credit)||0);
+    if(cr > 0){ out += cr; outN++; }
+    if(i.date !== today) return;
+    n++; sales += Number(i.total)||0;
+    const orig = Math.min(Number(i.total)||0, cr + (paidOn[keyOf(i)]||0));
+    given += orig; recv += (Number(i.total)||0) - orig;
+  });
+  PAYMENTS.forEach(p => { if(p.date === today && !dead[p.billCid || ((isCash(p.billType)?'N':'G') + p.invoiceNo)]) recv += Number(p.amount)||0; });
+  const kpi = (k,v,s,red) => '<div class="kpi"><div class="k">'+k+'</div><div class="v'+(red?' red':'')+'">₹ '+inr0(v)+'</div><div class="s">'+s+'</div></div>';
+  box.innerHTML = '<div class="sec">Today · ' + today + '</div><div class="kpis">' +
+    kpi('Sales today', sales, n + (n===1 ? ' bill' : ' bills')) +
+    (creditOn
+      ? kpi('Received today', recv, 'bills + old dues') + kpi('Credit given today', given, 'on today’s bills') +
+        kpi('Outstanding', out, outN + (outN===1 ? ' bill' : ' bills') + ' unpaid', out > 0)
+      : kpi('Average bill', n ? sales/n : 0, 'today')) + '</div>';
+}
+function renderHistory(){
+  renderSummary();
+  const q = val('histSearch').trim().toLowerCase();
+  const list = INVOICES.filter(i => !q || String(i.invoiceNo).toLowerCase().includes(q) ||
+    String(i.buyerName||'').toLowerCase().includes(q) || String(i.buyerMobile||'').includes(q));
+  const body = $('histBody');
+  if(!list.length){ body.innerHTML = '<p class="empty">' + (INVOICES.length ? 'Nothing matches that search.' : 'No bills yet.') + '</p>'; return; }
+  const creditOn = F('f_credit');
+  body.innerHTML = list.slice(0,300).map(i => {
+    const dead = i.status === 'CANCELLED';
+    return '<button class="tap' + (dead ? ' void' : '') + '" data-key="' + esc(keyOf(i)) + '" onclick="openInvoice(this.dataset.key)">' +
+      '<span style="min-width:0;"><span class="no">' + esc(i.invoiceNo) + '</span>' +
+        (isCash(i.billType) ? '<span class="badge">non-GST</span>' : '') +
+        (dead ? '<span class="badge due">cancelled</span>' : '') +
+        (!dead && creditOn && (Number(i.credit)||0) > 0 ? '<span class="badge due">₹' + inr0(i.credit) + ' due</span>' : '') +
+        (i.pending ? '<span class="badge pend">on phone</span>' : '') +
+        '<span class="l2">' + esc(i.buyerName||'—') + ' · ' + esc(i.date||'') + '</span></span>' +
+      '<span class="amt">₹ ' + inr0(i.total) + '</span></button>';
+  }).join('');
+}
+function drow(l,v){ return '<div class="drow"><span>'+esc(l)+'</span><span>'+esc(v||'—')+'</span></div>'; }
+function money(l,v){ return '<div class="drow"><span>'+esc(l)+'</span><span>₹ '+inr(v)+'</span></div>'; }
+function openInvoice(key){
+  const i = findInv(key); if(!i) return;
+  const cash = isCash(i.billType), dead = i.status === 'CANCELLED', intra = isIntrastate(i.placeOfSupply);
+  const items = i.items || [], k = esc(key), creditOn = F('f_credit');
+  let html = '';
+  if(dead) html += '<div class="stamp">CANCELLED' + (i.cancelReason ? '<div style="font-weight:400;letter-spacing:0;font-size:.82rem;margin-top:2px;">' + esc(i.cancelReason) + '</div>' : '') + '</div>';
+  if(i.renumberedFrom) html += '<div class="banner bad">This bill was first numbered ' + esc(i.renumberedFrom) + ' on the phone and is now ' + esc(i.invoiceNo) + '. Share the PDF again.</div>';
+  html += '<div class="sec">Buyer</div>' + drow('Name', i.buyerName) + drow('Mobile', i.buyerMobile) + drow('Address', i.buyerAddress) +
+    (cash ? '' : drow('GSTIN', i.buyerGSTIN) + drow('Place of supply', i.placeOfSupply)) +
+    drow('Date', (i.date||'') + (i.time ? ' · ' + i.time : ''));
+  html += '<div class="sec">Items</div>' + (items.length
+    ? items.map(it => '<div class="drow"><span style="color:var(--ink);">' + esc(it.name) + '<br><span style="font-size:.76rem;color:var(--muted);">' + esc(it.qty) + ' ' + esc(it.unit||'') + ' × ₹' + inr(it.rate) + (cash ? '' : ' · GST ' + esc(it.gst) + '%') + '</span></span><span>₹ ' + inr(it.amount) + '</span></div>').join('')
+    : '<p class="hint">' + esc(i.summary || 'Item details were not stored for this bill.') + '</p>');
+  const cr = Math.max(0, Number(i.credit)||0);
+  html += '<div class="sec">Amounts</div>' +
+    (cash ? '' : money('Taxable value', i.taxableValue) + (intra ? money('CGST', i.cgst) + money('SGST', i.sgst) : money('IGST', i.igst))) +
+    (Number(i.transport) ? money(CFG.charge1, i.transport) : '') + (Number(i.labour) ? money(CFG.charge2, i.labour) : '') +
+    (Math.abs(Number(i.roundOff)||0) >= 0.01 ? money('Round off', i.roundOff) : '') +
+    '<div class="drow grand"><span>Total</span><span>₹ ' + inr(i.total) + '</span></div>';
+  if(creditOn && !dead){
+    const pays = paymentsFor(i);
+    if(cr > 0 || pays.length){
+      html += '<div class="sec">Payments</div>';
+      html += pays.length ? pays.slice().reverse().map(p => '<div class="drow"><span>' + esc(p.date) + ' · ' + esc(p.mode||'Cash') + (p.note ? ' · ' + esc(p.note) : '') +
+          (p.pending ? '<span class="badge pend">on phone</span>' : '') + '</span><span>₹ ' + inr(p.amount) + '</span></div>').join('')
+        : '<p class="hint" style="margin:0;">No payment received after the bill yet.</p>';
+      html += cr > 0
+        ? '<div class="drow" style="font-weight:700;"><span style="color:var(--red);">Balance due</span><span style="color:var(--red);">₹ ' + inr(cr) + '</span></div>' +
+          '<button class="btn navy block" style="margin-top:8px;" data-key="'+k+'" onclick="openPayment(this.dataset.key)">Record payment</button>'
+        : '<div class="drow"><span style="color:var(--ok);">Paid in full</span><span style="color:var(--ok);">✓</span></div>';
+    }
+  }
+  html += '<div class="btn-row fill" style="margin-top:18px;">' +
+    (items.length ? '<button class="btn primary" data-key="'+k+'" onclick="reprint(this.dataset.key,true)">Share PDF</button>' +
+                    '<button class="btn" data-key="'+k+'" onclick="reprint(this.dataset.key,false)">Download</button>' : '') + '</div>' +
+    '<div class="btn-row fill" style="margin-top:9px;">' +
+    '<button class="btn ghost" data-key="'+k+'" onclick="repeatBill(this.dataset.key)">Bill again</button>' +
+    (dead ? '' : '<button class="btn danger" data-key="'+k+'" onclick="openCancel(this.dataset.key)">Cancel bill</button>') + '</div>';
+  openSheet((cash ? 'Bill ' : 'Invoice ') + i.invoiceNo, html);
+}
+async function reprint(key, share){
+  const i = findInv(key); if(!i) return;
+  try{ await (isCash(i.billType) ? makeCashPDF(i, {share}) : makePDF(i, {share})); }
+  catch(err){ toast('PDF failed: ' + esc(err.message||err), 'err'); }
+}
+function repeatBill(key){
+  const i = findInv(key); if(!i) return;
+  closeSheet(); go('bill'); resetForm();
+  $('buyerName').value = i.buyerName||''; $('buyerMobile').value = i.buyerMobile||'';
+  $('buyerAddress').value = i.buyerAddress||''; $('buyerGSTIN').value = i.buyerGSTIN||'';
+  if(i.placeOfSupply) $('placeOfSupply').value = i.placeOfSupply;
+  (i.items||[]).forEach(it => addLine(it, it.qty));
+  recalc(); toast('Copied to a new bill.');
+}
+
+/* Payment log: each receipt is its own entry; the bill's balance comes down by it. */
+function openPayment(key){
+  const i = findInv(key); if(!i) return;
+  const due = Math.max(0, Number(i.credit)||0);
+  openSheet('Payment · ' + i.invoiceNo,
+    drow('Party', i.buyerName) + money('Balance due', due) +
+    '<div class="grid2" style="margin-top:12px;"><div class="field"><label for="payAmt">Amount received ₹</label>' +
+      '<input id="payAmt" type="number" inputmode="decimal" min="0" step="0.01" value="' + due + '"></div>' +
+    '<div class="field"><label for="payMode">Mode</label><select id="payMode"><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div></div>' +
+    '<div class="field"><label for="payNote">Note (optional)</label><input id="payNote" autocomplete="off"></div>' +
+    '<div class="btn-row fill"><button class="btn ghost" data-key="'+esc(key)+'" onclick="openInvoice(this.dataset.key)">Back</button>' +
+    '<button class="btn primary" data-key="'+esc(key)+'" onclick="recordPayment(this.dataset.key)">Save payment</button></div>');
+}
+function recordPayment(key){
+  const i = findInv(key); if(!i) return;
+  const due = Math.max(0, Number(i.credit)||0), amount = r2(parseFloat(val('payAmt')));
+  if(!(amount > 0)){ toast('Enter the amount received.','err'); return; }
+  if(amount > due + 0.005){ toast('That is more than the balance due (₹ ' + inr(due) + ').','err'); return; }
+  const left = r2(due - amount);
+  const p = {pid: uid('p'), billCid: i.cid || '', invoiceNo: i.invoiceNo, billType: i.billType, party: i.buyerName,
+             date: todayDMY(), time: nowTime(), amount, mode: val('payMode') || 'Cash', note: val('payNote').trim()};
+  i.credit = left; save(K.inv, INVOICES);
+  PAYMENTS.unshift(Object.assign({balance:left, pending:true, ts:Date.now()}, p)); save(K.pay, PAYMENTS);
+  QUEUE.payments.push(p); save(K.q, QUEUE);
+  openInvoice(key); refreshLists();
+  toast(left > 0 ? 'Payment saved. ₹ ' + inr0(left) + ' still due.' : 'Payment saved. Bill settled in full.','ok');
+  refreshSyncUI(); sync({silent:true, pull:false});
+}
+
+/* Cancel keeps the bill and its number (no gap in the series) and marks it CANCELLED.
+   If the client has switched it on, the owner's PIN is asked first. */
+function pinNeeded(){ return CFG.f_cancelPin === true && !!CFG.cancelPinHash; }
+function pinHash(pin){ return sha256('pulse-pin:' + String(pin||'').trim()); }
+function openCancel(key){
+  const i = findInv(key); if(!i) return;
+  openSheet('Cancel ' + i.invoiceNo,
+    '<p class="hint">The bill stays in the records with its number and is marked CANCELLED. It leaves the day’s totals and any balance due is cleared. This cannot be undone from the app.</p>' +
+    '<div class="field"><label for="cnReason">Reason</label><input id="cnReason" placeholder="e.g. wrong party, goods returned" autocomplete="off"></div>' +
+    (pinNeeded() ? '<div class="field"><label for="cnPin">Owner’s PIN</label><input id="cnPin" type="password" inputmode="numeric" maxlength="8" autocomplete="off"></div>' : '') +
+    '<div class="btn-row fill"><button class="btn ghost" data-key="'+esc(key)+'" onclick="openInvoice(this.dataset.key)">Keep bill</button>' +
+    '<button class="btn danger" data-key="'+esc(key)+'" onclick="confirmCancel(this.dataset.key)">Cancel bill</button></div>' +
+    (pinNeeded() ? '<div style="text-align:center;margin-top:14px;"><button class="mini" onclick="openChangePin()">Change PIN</button></div>' : ''));
+}
+async function confirmCancel(key){
+  const i = findInv(key); if(!i || i.status === 'CANCELLED') return;
+  const reason = val('cnReason').trim();
+  if(!reason){ toast('Write a short reason.','err'); return; }
+  if(pinNeeded() && (await pinHash(val('cnPin'))) !== CFG.cancelPinHash){
+    toast('Wrong PIN. Only the owner can cancel a bill.','err'); const b = $('cnPin'); if(b){ b.value=''; b.focus(); } return;
+  }
+  i.status = 'CANCELLED'; i.cancelReason = reason; i.credit = 0; save(K.inv, INVOICES);
+  QUEUE.cancels.push({cid: i.cid || '', invoiceNo: i.invoiceNo, billType: i.billType, reason}); save(K.q, QUEUE);
+  openInvoice(key); refreshLists();
+  toast('Bill ' + esc(i.invoiceNo) + ' cancelled.','ok');
+  refreshSyncUI(); sync({silent:true, pull:false});
+}
+/* The owner can change the PIN without the settings password, by giving the current PIN. */
+function openChangePin(){
+  openSheet('Change PIN',
+    '<div class="field"><label for="cpOld">Current PIN</label><input id="cpOld" type="password" inputmode="numeric" maxlength="8" autocomplete="off"></div>' +
+    '<div class="field"><label for="cpNew">New PIN (4 to 8 digits)</label><input id="cpNew" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div>' +
+    '<div class="field"><label for="cpNew2">New PIN again</label><input id="cpNew2" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div>' +
+    '<button class="btn primary block" onclick="commitChangePin()">Save new PIN</button>');
+}
+async function commitChangePin(){
+  if((await pinHash(val('cpOld'))) !== CFG.cancelPinHash){ toast('Current PIN is wrong.','err'); return; }
+  const n = val('cpNew').trim();
+  if(!/^\d{4,8}$/.test(n)){ toast('The new PIN must be 4 to 8 digits.','err'); return; }
+  if(n !== val('cpNew2').trim()){ toast('The two new PINs do not match.','err'); return; }
+  CFG.cancelPinHash = await pinHash(n); save(K.cfg, CFG);
+  QUEUE.configDirty = true; QUEUE.configRev = (QUEUE.configRev|0) + 1; save(K.q, QUEUE);
+  closeSheet(); toast('PIN changed for every phone of this shop.','ok');
+  refreshSyncUI(); sync({silent:true, pull:false});
+}
+function refreshLists(){
+  if(currentTab === 'history') renderHistory();
+  if(currentTab === 'customers') renderCustomers();
+}
+
+/* Refresh is authoritative: rows deleted in the sheet disappear here too.
+   Bills still waiting to go up are always kept, and when the reply is capped
+   the older tail is left alone (it is simply out of range, not deleted). */
+async function pullHistory(){
+  if(!CFG.scriptUrl){ toast('This phone is not connected yet.','err'); return; }
+  if(!online()){ toast('Offline — showing what is on this phone.'); return; }
+  toast('<span class="spin"></span> Loading');
+  try{
+    const d = await apiGet({action:'invoices', limit:300});
+    if(!d || !d.success){ toast('Server said: ' + esc(d && d.error || 'unknown error'), 'err'); return; }
+    const remote = (d.invoices || []).map(normInv);
+    const dated = remote.map(tsOf).filter(t => t > 0);
+    const before = INVOICES.length;
+    if(dated.length || remote.length === 0){
+      const cutoff = remote.length >= 300 ? Math.min.apply(null, dated) : -Infinity;
+      const live = {}; remote.forEach(r => { live[keyOf(r)] = true; });
+      INVOICES = INVOICES.filter(i => i.pending || tsOf(i) < cutoff || live[keyOf(i)]);
+    }
+    applyRemoteBills({invoices: remote, dues: d.dues, payments: d.payments});
+    renderHistory();
+    const dropped = before - INVOICES.length;
+    toast(dropped > 0 ? 'Updated. ' + dropped + ' deleted bill(s) cleared from this phone.' : 'History updated.', 'ok');
+  }catch(e){ toast('Could not connect.','err'); }
+}
+
+/* =====================================================================
+   ITEMS · PARTIES
+   ===================================================================== */
+function renderItems(){
+  const q = val('itemSearch').trim().toLowerCase();
+  const hits = CATALOG.map((it,idx)=>({it,idx})).filter(({it}) => !q || String(it.name).toLowerCase().includes(q) || String(it.hsn||'').includes(q));
+  $('itemCount').textContent = CATALOG.length ? CATALOG.length + ' items' : '';
+  $('itemsBody').innerHTML = hits.length ? hits.slice(0,300).map(({it,idx}) =>
+    '<button class="tap" onclick="editItem('+idx+')"><span><span class="l1">'+esc(it.name)+'</span><span class="l2">'+itemMeta(it)+'</span></span><span style="color:var(--muted);">›</span></button>').join('')
+    : '<p class="empty">' + (CATALOG.length ? 'No item matches.' : 'No items yet. Add the things this shop sells.') + '</p>';
+  $('itemsSaveBtn').classList.toggle('hidden', !QUEUE.catalogDirty);
+}
+function editItem(idx){
+  const it = idx>=0 ? CATALOG[idx] : {name:'', hsn:'', unit:'PCS', rate:0, gst:F('f_gst') ? 18 : 0};
+  openSheet(idx>=0 ? 'Edit item' : 'New item', itemFormHtml('ei', it) +
+    '<div class="btn-row fill">' + (idx>=0 ? '<button class="btn danger" onclick="deleteItem('+idx+')">Delete</button>' : '') +
+    '<button class="btn primary" onclick="commitItem('+idx+')">Save item</button></div>');
+}
+function commitItem(idx){
+  const it = readItemForm('ei');
+  if(!it.name){ toast('Give the item a name.','err'); return; }
+  if(idx>=0) CATALOG[idx]=it; else CATALOG.push(it);
+  catalogChanged(); closeSheet(); renderItems();
+  toast('Saved on this phone. Tap “Save changes” to send it to every phone.');
+}
+function deleteItem(idx){
+  if(!confirm('Remove "'+CATALOG[idx].name+'" from the item list?')) return;
+  CATALOG.splice(idx,1); catalogChanged(); closeSheet(); renderItems();
+}
+
+/* Party-wise dues: unpaid bills grouped by mobile number (or by name when there is none). */
+function partyKey(i){
+  const m = String(i.buyerMobile||'').replace(/\D/g,'');
+  return m ? 'm' + m.slice(-10) : 'n' + String(i.buyerName||'').trim().toLowerCase();
+}
+function duesList(){
+  const map = {};
+  INVOICES.forEach(i => {
+    const cr = Number(i.credit)||0;
+    if(i.status === 'CANCELLED' || cr <= 0) return;
+    const k = partyKey(i);
+    const g = map[k] || (map[k] = {key:k, name:i.buyerName, mobile:i.buyerMobile, total:0, bills:[]});
+    if(!g.mobile && i.buyerMobile) g.mobile = i.buyerMobile;
+    g.total += cr; g.bills.push(i);
+  });
+  return Object.values(map).sort((a,b) => b.total - a.total);
+}
+function renderDues(){
+  const box = $('duesBox');
+  if(!F('f_credit')){ box.innerHTML = ''; return; }
+  const list = duesList();
+  if(!list.length){ box.innerHTML = ''; return; }
+  const total = list.reduce((a,g) => a + g.total, 0);
+  box.innerHTML = '<div class="sec">Dues <span class="side">₹ ' + inr0(total) + ' · ' + list.length + (list.length===1 ? ' party' : ' parties') + '</span></div>' +
+    '<div class="card" style="padding-top:4px;padding-bottom:4px;">' + list.slice(0,200).map(g =>
+      '<button class="tap" data-key="' + esc(g.key) + '" onclick="openDues(this.dataset.key)"><span style="min-width:0;"><span class="l1">' + esc(g.name||'—') + '</span>' +
+      '<span class="l2">' + esc(g.mobile||'no mobile') + ' · ' + g.bills.length + (g.bills.length===1 ? ' bill' : ' bills') + '</span></span>' +
+      '<span class="amt" style="color:var(--red);">₹ ' + inr0(g.total) + '</span></button>').join('') + '</div>';
+}
+function openDues(key){
+  const g = duesList().find(x => x.key === key); if(!g) return;
+  openSheet(g.name || 'Dues',
+    drow('Mobile', g.mobile) + '<div class="drow grand" style="border-top:none;margin-top:0;padding-top:4px;"><span>Total due</span><span style="color:var(--red)!important;">₹ ' + inr(g.total) + '</span></div>' +
+    '<div class="sec">Unpaid bills <span class="side">tap a bill to record payment</span></div>' +
+    g.bills.map(i => '<button class="tap" data-key="' + esc(keyOf(i)) + '" onclick="openInvoice(this.dataset.key)"><span><span class="no">' + esc(i.invoiceNo) + '</span>' +
+      '<span class="l2">' + esc(i.date||'') + ' · bill ₹ ' + inr0(i.total) + '</span></span><span class="amt" style="color:var(--red);">₹ ' + inr0(i.credit) + '</span></button>').join('') +
+    '<button class="btn primary block" style="margin-top:14px;" data-key="' + esc(key) + '" onclick="sendReminder(this.dataset.key)">Send WhatsApp reminder</button>' +
+    (g.mobile ? '' : '<p class="hint" style="margin:8px 0 0;">No mobile number saved for this party — WhatsApp will ask you to pick the contact.</p>'));
+}
+function waNumber(m){
+  const d = String(m||'').replace(/\D/g,'');
+  if(d.length === 10) return '91' + d;
+  if(d.length === 11 && d[0] === '0') return '91' + d.slice(1);
+  if(d.length === 12 && d.slice(0,2) === '91') return d;
+  return '';
+}
+function reminderText(g){
+  const lines = g.bills.slice().sort((a,b) => tsOf(a) - tsOf(b)).map(i => '• Bill ' + i.invoiceNo + ' dated ' + (i.date||'') + ' — Rs. ' + inr0(i.credit));
+  return 'Namaste ' + (g.name||'') + ',\n' + 'This is a payment reminder from ' + (CFG.shopName || 'our shop') + '.\n' +
+    'Rs. ' + inr0(g.total) + ' is pending:\n' + lines.join('\n') + '\n' + 'Kindly pay at the earliest. Thank you.';
+}
+function sendReminder(key){
+  const g = duesList().find(x => x.key === key); if(!g) return;
+  const num = waNumber(g.mobile);
+  window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(reminderText(g)), '_blank', 'noopener');
+}
+
+function renderCustomers(){
+  renderDues();
+  const q = val('custSearch').trim().toLowerCase();
+  const hits = CUSTOMERS.map((c,idx)=>({c,idx})).filter(({c}) => !q || String(c.name||'').toLowerCase().includes(q) || String(c.mobile||'').includes(q));
+  $('custCount').textContent = CUSTOMERS.length ? CUSTOMERS.length + ' saved' : '';
+  $('custBody').innerHTML = hits.length ? hits.slice(0,300).map(({c,idx}) =>
+    '<button class="tap" onclick="editCustomer('+idx+')"><span><span class="l1">'+esc(c.name)+'</span><span class="l2">'+esc(c.mobile||'no mobile')+
+    (c.address ? ' · '+esc(c.address) : '')+(c.gstin ? ' · '+esc(c.gstin) : '')+'</span></span><span style="color:var(--muted);">›</span></button>').join('')
+    : '<p class="empty">' + (CUSTOMERS.length ? 'No match.' : 'No parties saved yet. A buyer with a mobile number is remembered automatically.') + '</p>';
+}
+function editCustomer(idx){
+  const c = idx>=0 ? CUSTOMERS[idx] : {name:'', mobile:'', address:'', gstin:''};
+  const locked = idx>=0 && c.mobile;
+  openSheet(idx>=0 ? 'Edit party' : 'New party',
+    '<div class="field"><label>Name</label><input id="cuName" value="'+esc(c.name)+'" autocomplete="off"></div>' +
+    '<div class="field"><label>Mobile' + (locked ? ' (cannot be changed)' : '') + '</label><input id="cuMobile" inputmode="numeric" value="'+esc(c.mobile)+'"'+(locked?' readonly style="background:var(--soft);"':'')+' autocomplete="off"></div>' +
+    '<div class="field"><label>Address</label><input id="cuAddress" value="'+esc(c.address||'')+'" autocomplete="off"></div>' +
+    '<div class="field"><label>GSTIN (optional)</label><input id="cuGstin" maxlength="15" style="text-transform:uppercase" value="'+esc(c.gstin||'')+'" autocomplete="off"></div>' +
+    '<button class="btn primary block" onclick="commitCustomer()">Save party</button>');
+}
+function commitCustomer(){
+  const c = {name:val('cuName').trim(), mobile:val('cuMobile').trim(), address:val('cuAddress').trim(), gstin:val('cuGstin').trim().toUpperCase()};
+  if(!c.name){ toast('Enter a name.','err'); return; }
+  if(!c.mobile){ toast('Enter the mobile number — parties are matched by it.','err'); return; }
+  const prob = gstinProblem(c.gstin); if(prob){ toast(prob,'err'); return; }
+  const i = CUSTOMERS.findIndex(x => String(x.mobile) === c.mobile);
+  if(i>=0) CUSTOMERS[i] = c; else CUSTOMERS.push(c);
+  save(K.cust, CUSTOMERS);
+  QUEUE.customers = QUEUE.customers.filter(q => String(q.mobile) !== c.mobile); QUEUE.customers.push(c); save(K.q, QUEUE);
+  closeSheet(); renderCustomers(); refreshSyncUI();
+  toast('Party saved.','ok'); sync({silent:true, pull:false});
+}
+
+/* =====================================================================
+   SETTINGS — password locked; for whoever sets the app up for a client
+   ===================================================================== */
+async function sha256(s){
+  if(window.crypto && crypto.subtle){
+    const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join('');
+  }
+  return '';
+}
+function askSettings(){
+  if(currentTab === 'settings'){ go(lastTab); return; }
+  openSheet('Settings', '<p class="hint">Settings are locked. Enter the password.</p>' +
+    '<div class="field"><label for="pwBox">Password</label><input id="pwBox" type="password" inputmode="numeric" autocomplete="off" onkeydown="if(event.key===\'Enter\')unlockSettings()"></div>' +
+    '<button class="btn primary block" onclick="unlockSettings()">Open settings</button>');
+  setTimeout(() => { const b = $('pwBox'); if(b) b.focus(); }, 280);
+}
+async function unlockSettings(){
+  const h = await sha256(val('pwBox'));
+  if(h !== PW_HASH){ toast(h ? 'Wrong password.' : 'Settings need a secure (https) page.','err'); const b=$('pwBox'); if(b){ b.value=''; b.focus(); } return; }
+  closeSheet(); fillSettings(); go('settings');
+}
+function fillSettings(){
+  $('cUrl').value = CFG.scriptUrl||''; $('cToken').value = CFG.token||'';
+  $('cShopName').value = CFG.shopName||''; $('cShopSub').value = CFG.shopSub||''; $('cGstin').value = CFG.gstin||'';
+  $('cPrefix').value = CFG.gstPrefix||''; $('cBank').value = CFG.bank||''; $('cTerms').value = CFG.terms||'';
+  $('cCharge1').value = CFG.charge1||''; $('cCharge2').value = CFG.charge2||'';
+  $('cHomeState').innerHTML = STATES.map(s => '<option'+(s===CFG.homeState?' selected':'')+'>'+s+'</option>').join('');
+  ['f_gst','f_cash','f_charges','f_credit','f_history','f_summary'].forEach(k => { $(k).checked = CFG[k] !== false; });
+  $('f_cancelPin').checked = CFG.f_cancelPin === true; $('cPin').value = '';
+  $('pinState').textContent = CFG.cancelPinHash ? '(a PIN is set — leave blank to keep it)' : '(none set yet)';
+  $('cStartNo').value = ''; $('cStartNo').placeholder = NEXTNO ? 'Now ' + NEXTNO : 'e.g. 431';
+  $('cStartCash').value = ''; $('cStartCash').placeholder = NEXTCASH ? 'Now ' + NEXTCASH : 'e.g. 11';
+  $('connState').textContent = CFG.scriptUrl ? 'Connected' : 'Not connected';
+  const last = load(K.sync, 0), n = pendingCount();
+  $('stateNote').textContent = INVOICES.length + ' bills, ' + CATALOG.length + ' items and ' + CUSTOMERS.length + ' parties on this phone. ' +
+    (n ? n + ' waiting to sync. ' : 'Nothing waiting to sync. ') + (last ? 'Last sync ' + new Date(last).toLocaleString('en-IN') + '.' : 'Never synced.');
+  $('verLbl').textContent = 'v' + APP_VERSION;
+}
+async function saveConnection(){
+  const url = val('cUrl').trim(), token = val('cToken').trim(), note = $('connNote');
+  if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)){ note.textContent = 'That does not look like a web app URL. It starts with https://script.google.com/ and ends with /exec.'; note.style.color = 'var(--red)'; return; }
+  if(CFG.scriptUrl && url !== CFG.scriptUrl && (INVOICES.length || pendingCount())){
+    note.textContent = 'This phone holds another client’s data. Use “Disconnect this phone” below first.'; note.style.color = 'var(--red)'; return;
+  }
+  CFG.scriptUrl = url; CFG.token = token; save(K.cfg, CFG);
+  note.style.color = ''; note.innerHTML = 'Checking…';
+  const ok = await sync({silent:true});
+  if(ok){
+    fillSettings();
+    note.textContent = 'Connected' + (CFG.shopName ? ' to ' + CFG.shopName : ' — new sheet, fill in the shop details below') + '. Next GST ' + (NEXTNO||'—') + ', next non-GST ' + (NEXTCASH||'—') + '.';
+    note.style.color = 'var(--ok)';
+  } else {
+    note.textContent = 'Could not connect. Check the URL, the access word, that the deployment is set to “Anyone”, and the internet.';
+    note.style.color = 'var(--red)';
+  }
+}
+function setupCode(){
+  const json = JSON.stringify({u: CFG.scriptUrl, t: CFG.token || ''});
+  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function copySetupLink(){
+  if(!CFG.scriptUrl){ toast('Connect first.','err'); return; }
+  const link = location.origin + location.pathname + '#setup=' + setupCode();
+  openSheet('Setup link', '<p class="hint">Send this link to the client’s phone and open it there once. It connects that phone to this client’s sheet. Keep it private — it carries the access word.</p>' +
+    '<div class="field"><textarea id="setupLinkBox" readonly rows="5" style="font-size:13px;word-break:break-all;">' + esc(link) + '</textarea></div>' +
+    '<button class="btn primary block" onclick="copyText(val(\'setupLinkBox\'))">Copy link</button>');
+}
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); toast('Copied.','ok'); }
+  catch(e){ const b = $('setupLinkBox'); if(b){ b.select(); try{ document.execCommand('copy'); toast('Copied.','ok'); return; }catch(x){} } toast('Press and hold the link to copy it.'); }
+}
+function applySetup(code){
+  let o;
+  try{
+    code = String(code||'').trim(); const m = code.match(/setup=([A-Za-z0-9_\-]+)/); if(m) code = m[1];
+    o = JSON.parse(decodeURIComponent(escape(atob(code.replace(/-/g,'+').replace(/_/g,'/')))));
+  }catch(e){ o = null; }
+  if(!o || !/^https:\/\/script\.google\.com\//.test(String(o.u||''))){ toast('That setup link is not valid.','err'); return false; }
+  if(CFG.scriptUrl && CFG.scriptUrl !== o.u){
+    if(pendingCount()){ toast('This phone still has bills waiting to sync for its current shop. Sync first.','err'); return false; }
+    if(!confirm('This phone is set up for ' + (CFG.shopName || 'another shop') + '. Switch it to the new shop? Its saved copy of the old shop’s bills will be removed from this phone (they stay in the sheet).')) return false;
+    wipeLocal();
+    CFG = Object.assign({}, DEFAULT_CONFIG); CATALOG = []; CUSTOMERS = []; INVOICES = []; PAYMENTS = []; NEXTNO = NEXTCASH = null;
+    QUEUE = {invoices:[], customers:[], payments:[], cancels:[], catalogDirty:false, catalogRev:0, configDirty:false, configRev:0};
+  }
+  CFG.scriptUrl = o.u; CFG.token = o.t || ''; save(K.cfg, CFG);
+  applyConfigUI(); refreshSyncUI();
+  toast('Connecting…');
+  sync({silent:true}).then(ok => toast(ok ? 'This phone is connected' + (CFG.shopName ? ' to ' + esc(CFG.shopName) : '') + '.' : 'Saved. It will connect when the internet is back.', ok ? 'ok' : ''));
+  return true;
+}
+function pasteSetup(){ if(applySetup(val('setupPaste'))) $('setupPaste').value = ''; }
+function wipeLocal(){ Object.keys(localStorage).filter(k => k.indexOf('pulse.') === 0).forEach(k => localStorage.removeItem(k)); }
+
+async function saveSettings(){
+  const g = val('cGstin').trim().toUpperCase();
+  const pin = val('cPin').trim();
+  if(pin && !/^\d{4,8}$/.test(pin)){ toast('The cancel PIN must be 4 to 8 digits.','err'); return; }
+  if($('f_cancelPin').checked && !pin && !CFG.cancelPinHash){ toast('Enter a cancel PIN, or switch “PIN to cancel a bill” off.','err'); return; }
+  const prob = gstinProblem(g); if(prob){ toast('Shop GSTIN: ' + prob,'err'); return; }
+  if(!$('f_gst').checked && !$('f_cash').checked){ toast('Keep at least one bill type switched on.','err'); return; }
+  if($('f_gst').checked && !g && !confirm('GST bill is on but the shop GSTIN is blank. Continue?')) return;
+  Object.assign(CFG, {shopName:val('cShopName').trim(), shopSub:val('cShopSub').trim(), gstin:g, homeState:val('cHomeState'),
+    gstPrefix:(val('cPrefix').trim().toUpperCase().replace(/[^A-Z\/-]/g,'') || 'INV'), bank:val('cBank').trim(), terms:val('cTerms').trim(),
+    charge1:val('cCharge1').trim() || DEFAULT_CONFIG.charge1, charge2:val('cCharge2').trim() || DEFAULT_CONFIG.charge2});
+  ['f_gst','f_cash','f_charges','f_credit','f_history','f_summary','f_cancelPin'].forEach(k => { CFG[k] = $(k).checked; });
+  if(pin) CFG.cancelPinHash = await pinHash(pin);
+  save(K.cfg, CFG);
+  QUEUE.configDirty = true; QUEUE.configRev = (QUEUE.configRev|0) + 1; save(K.q, QUEUE);
+  applyConfigUI(); fillSettings();
+  if(!CFG.scriptUrl){ toast('Saved on this phone. Connect a sheet to share it with the client’s other phones.'); return; }
+  sync({silent:true}).then(ok => toast(ok ? 'Settings saved for this client.' : 'Saved on this phone. It will go up when the internet is back.', ok ? 'ok' : ''));
+}
+async function setStartNumber(cash){
+  const n = parseInt(val(cash ? 'cStartCash' : 'cStartNo'), 10), note = $('numNote');
+  if(!n || n < 1){ toast('Enter the number the next bill should carry.','err'); return; }
+  if(!CFG.scriptUrl || !online()){ toast('This needs a connection.','err'); return; }
+  if(QUEUE.invoices.length){ toast('Sync the waiting bills first.','err'); return; }
+  if(!confirm('The next ' + (cash ? 'non-GST bill' : 'GST bill') + ' will be number ' + n + '. Continue?')) return;
+  try{
+    const r = await apiPost({action:'setStartNumber', next:n, series: cash ? T_CASH : T_GST});
+    if(!r || !r.success) throw new Error(r && r.error || 'failed');
+    if(cash){ NEXTCASH = r.nextInvoiceNo; save(K.nextCash, NEXTCASH); } else { NEXTNO = r.nextInvoiceNo; save(K.next, NEXTNO); }
+    const clash = r.highestUsed && parseInt(String(r.highestUsed).replace(/\D/g,''), 10) >= n;
+    note.textContent = clash ? 'Set to ' + r.nextInvoiceNo + ', but ' + r.highestUsed + ' is already used. Numbers will repeat unless you raise it.' : 'Done. The next one will be ' + r.nextInvoiceNo + '.';
+    note.style.color = clash ? 'var(--red)' : 'var(--ok)';
+    fillSettings(); paintNextNo();
+  }catch(e){ note.textContent = 'Could not set the number: ' + (e.message||e); note.style.color = 'var(--red)'; }
+}
+function exportBackup(){
+  const data = {};
+  Object.keys(localStorage).filter(k => k.indexOf('pulse.') === 0).forEach(k => { data[k] = localStorage.getItem(k); });
+  const blob = new Blob([JSON.stringify({app:'pulse', version:APP_VERSION, savedAt:new Date().toISOString(), data}, null, 1)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pulse-backup-' + (CFG.shopName||'shop').replace(/[^\w]+/g,'-').toLowerCase() + '-' + todayISO() + '.json';
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function restoreBackup(input){
+  const f = input.files && input.files[0]; input.value = '';
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    let o; try{ o = JSON.parse(rd.result); }catch(e){ o = null; }
+    if(!o || o.app !== 'pulse' || !o.data || typeof o.data !== 'object'){ toast('That is not a Pulse backup file.','err'); return; }
+    if(!confirm('Replace everything on this phone with the backup from ' + String(o.savedAt||'').slice(0,10) + '?')) return;
+    wipeLocal();
+    Object.keys(o.data).forEach(k => { if(k.indexOf('pulse.') === 0) localStorage.setItem(k, o.data[k]); });
+    location.reload();
+  };
+  rd.readAsText(f);
+}
+function disconnectPhone(){
+  const n = pendingCount();
+  if(n && !confirm(n + ' item(s) on this phone have NOT reached the sheet yet and will be lost. Download a backup first. Disconnect anyway?')) return;
+  if(!confirm('Remove this client’s setup and saved data from this phone? The data in the Google Sheet is not touched.')) return;
+  wipeLocal(); location.replace(location.pathname);
+}
+
+/* Shop name, charge names and feature switches → the screen. */
+function applyConfigUI(){
+  paintHeader();
+  document.title = CFG.shopName ? CFG.shopName + ' — Pulse' : 'Pulse';
+  $('lblCharge1').textContent = (CFG.charge1 || DEFAULT_CONFIG.charge1) + ' ₹';
+  $('lblCharge2').textContent = (CFG.charge2 || DEFAULT_CONFIG.charge2) + ' ₹';
+  const show = (sel, on) => document.querySelectorAll(sel).forEach(e => e.classList.toggle('hidden', !on));
+  show('[data-f="gst"]', F('f_gst'));
+  show('[data-f="charges"]', F('f_charges'));
+  show('[data-f="credit"]', F('f_credit'));
+  show('[data-f="extras"]', F('f_charges') || F('f_credit'));
+  show('.tabbar [data-tab="history"]', F('f_history'));
+  if(currentTab === 'history' && !F('f_history')) go('bill');
+  const pos = $('placeOfSupply');
+  if(!F('f_gst') || !pos.value) pos.value = CFG.homeState || STATES[0];
+  paintNextNo(); recalc();
+  refreshLists();
+}
+
+/* =====================================================================
+   VERSION · UPDATE · INSTALL
+   ===================================================================== */
+async function checkUpdate(manual){
+  try{
+    const txt = await (await fetch('sw.js?ts=' + Date.now(), {cache:'no-store'})).text();
+    const m = txt.match(/VERSION\s*=\s*'([^']+)'/);
+    if(m && m[1] !== APP_VERSION){ $('updBanner').classList.remove('hidden'); if(manual) toast('Version ' + esc(m[1]) + ' is ready. Tap “Update now”.'); }
+    else if(manual) toast('This is the latest version (v' + APP_VERSION + ').','ok');
+  }catch(e){ if(manual) toast('Could not check — no internet.','err'); }
+}
+/* Clears the saved copy of the app (never the bills) and loads the newest one. */
+async function doUpdate(){
+  toast('<span class="spin"></span> Updating');
+  try{
+    if('serviceWorker' in navigator){ const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r => r.unregister())); }
+    if(window.caches){ const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); }
+  }catch(e){}
+  location.replace(location.pathname + '?v=' + Date.now());
+}
+let deferredPrompt = null;
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  if(!isStandalone){ $('installBanner').classList.remove('hidden'); $('installBtn2').classList.remove('hidden'); }
+});
+window.addEventListener('appinstalled', () => { deferredPrompt = null; $('installBanner').classList.add('hidden'); $('installBtn2').classList.add('hidden'); });
+async function installApp(){
+  if(!deferredPrompt){ toast('Use the browser menu and tap “Install app” or “Add to Home screen”.'); return; }
+  deferredPrompt.prompt();
+  try{ await deferredPrompt.userChoice; }catch(e){}
+  deferredPrompt = null; $('installBanner').classList.add('hidden');
+}
+
+/* =====================================================================
+   BOOT
+   ===================================================================== */
+window.addEventListener('DOMContentLoaded', () => {
+  $('placeOfSupply').innerHTML = STATES.map(s => '<option'+(s===CFG.homeState?' selected':'')+'>'+s+'</option>').join('');
+  $('billDate').value = todayISO();
+  restoreDraft();
+  applyConfigUI(); refreshSyncUI();
+
+  ['buyerName','buyerMobile','buyerAddress'].forEach(id => $(id).addEventListener('input', saveDraft));
+  $('buyerGSTIN').addEventListener('input', onGstinInput);
+  $('billDate').addEventListener('change', () => { dateTouched = val('billDate') !== todayISO(); saveDraft(); });
+  $('placeOfSupply').addEventListener('change', recalc);
+
+  // a setup link either arrives in the address or was parked earlier
+  const hash = location.hash || '';
+  const sm = hash.match(/^#setup=(.+)$/);
+  const parked = load(K.setup, null);
+  if(sm || hash) try{ history.replaceState(null, '', location.pathname); }catch(e){}
+  let setupDone = false;
+  if(sm) setupDone = applySetup(sm[1]);
+  else if(parked){ localStorage.removeItem(K.setup); setupDone = applySetup(parked); }
+
+  const tab = hash.replace('#','');
+  if(['history','items','customers'].includes(tab)) go(tab);
+  if(tab === 'settings') askSettings();
+
+  if(!setupDone) sync({silent:true});
+  checkUpdate(false);
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+});
+window.addEventListener('online',  () => { refreshSyncUI(); sync({silent:true}); });
+window.addEventListener('offline', refreshSyncUI);
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden) return;
+  freshenDate();
+  if(currentTab === 'history') renderHistory();
+  if(pendingCount()) sync({silent:true, pull:false});
+});
+</script>
+</body>
+</html>
